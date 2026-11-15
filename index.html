@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/src/style.css" />
+    <title>تنظيم مستندات الكلية</title>
+  </head>
+  <body>
+    <div id="app">
+      <!-- شاشة تسجيل الدخول -->
+      <section id="screen-login" class="screen login-screen">
+        <form id="login-form" class="login-box">
+          <h1>تنظيم مستندات الكلية</h1>
+          <input
+            id="username"
+            type="text"
+            placeholder="اسم المستخدم"
+            autocomplete="username"
+          />
+          <input
+            id="password"
+            type="password"
+            placeholder="كلمة المرور"
+            autocomplete="current-password"
+          />
+          <button type="submit" class="btn btn-primary">دخول</button>
+          <p id="login-error" class="error"></p>
+          <p class="login-credit">برمجة وتطوير: محمد احمد</p>
+        </form>
+      </section>
+
+      <!-- الواجهة الرئيسية -->
+      <div id="main-layout" class="screen hidden">
+        <nav class="navbar">
+          <ul class="nav-list">
+            <li class="nav-item">
+              <span class="nav-link">الدليل ▾</span>
+              <ul class="dropdown">
+                <li data-page="page-accounts">الدليل المحاسبي</li>
+                <li data-page="page-costcenters">مراكز التكلفة</li>
+              </ul>
+            </li>
+          </ul>
+
+          <div class="nav-tools">
+            <label for="dept-select">القسم:</label>
+            <select id="dept-select"></select>
+            <button id="btn-logout" class="btn btn-light" type="button">
+              خروج
+            </button>
+          </div>
+        </nav>
+
+        <main id="content">
+          <!-- الصفحة الرئيسية البيضاء -->
+          <section id="page-home" class="page hidden">
+            <div class="home-credit">
+              <p>برمجة وتطوير: محمد احمد</p>
+              <a href="mailto:mohammedahmedkadhim@gmail.com"
+                >mohammedahmedkadhim@gmail.com</a
+              >
+            </div>
+          </section>
+          <!-- صفحات الجداول تُضاف هنا تلقائياً -->
+        </main>
+      </div>
+
+      <!-- نافذة الإضافة والتعديل -->
+      <dialog id="entry-dialog">
+        <form id="entry-form">
+          <h3 id="dialog-title"></h3>
+          <label id="label-number" for="entry-number"></label>
+          <input id="entry-number" type="text" autocomplete="off" />
+          <label id="label-name" for="entry-name"></label>
+          <textarea id="entry-name" rows="3" autocomplete="off"></textarea>
+          <p id="entry-error" class="error"></p>
+          <div class="dialog-actions">
+            <button type="submit" class="btn btn-primary">حفظ</button>
+            <button type="button" id="btn-cancel" class="btn btn-light">
+              إلغاء
+            </button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog id="confirm-dialog">
+        <h3>تأكيد الحذف</h3>
+        <p id="confirm-text"></p>
+        <div class="dialog-actions">
+          <button type="button" id="btn-confirm-delete" class="btn btn-danger">
+            حذف
+          </button>
+          <button type="button" id="btn-confirm-cancel" class="btn btn-light">
+            إلغاء
+          </button>
+        </div>
+      </dialog>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

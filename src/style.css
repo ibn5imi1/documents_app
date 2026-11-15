@@ -1,0 +1,531 @@
+:root {
+  --primary: #1f4e79;
+  --primary-dark: #163a5a;
+  --bg: #f3f5f8;
+  --border: #d5dbe3;
+  --text: #1c2733;
+  --danger: #c0392b;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ===== أزرار وحقول ===== */
+input,
+select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+  background: #fff;
+}
+
+input:focus,
+select:focus {
+  outline: 2px solid var(--primary);
+  border-color: transparent;
+}
+
+.btn {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  font: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
+}
+
+.btn-light {
+  background: #e8ecf1;
+  color: var(--text);
+}
+
+.btn-light:hover {
+  background: #d9dfe7;
+}
+
+.btn-small {
+  padding: 5px 12px;
+  background: #e8ecf1;
+  font-size: 13px;
+}
+
+.btn-small:hover {
+  background: #d9dfe7;
+}
+
+.error {
+  color: var(--danger);
+  min-height: 20px;
+  font-size: 14px;
+}
+
+/* ===== تسجيل الدخول ===== */
+.login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-box {
+  width: 360px;
+  background: #fff;
+  padding: 32px;
+  border-radius: 14px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.login-box h1 {
+  font-size: 22px;
+  text-align: center;
+  color: var(--primary);
+  margin-bottom: 6px;
+}
+
+/* ===== النافبار ===== */
+.navbar {
+  background: var(--primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  height: 56px;
+}
+
+.nav-list {
+  list-style: none;
+  display: flex;
+  height: 100%;
+}
+
+.nav-item {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.nav-link {
+  padding: 0 18px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.nav-item:hover .nav-link {
+  background: var(--primary-dark);
+}
+
+.dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  min-width: 200px;
+  background: #fff;
+  color: var(--text);
+  list-style: none;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 10;
+}
+
+.nav-item:hover .dropdown {
+  display: block;
+}
+
+.dropdown li {
+  padding: 12px 16px;
+  cursor: pointer;
+}
+
+.dropdown li:hover {
+  background: #eaf0f7;
+}
+
+.nav-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-tools select {
+  width: 160px;
+  padding: 6px 10px;
+}
+
+.nav-tools .btn {
+  padding: 6px 14px;
+}
+
+/* ===== الصفحات ===== */
+#content {
+  padding: 24px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.page-title {
+  font-size: 22px;
+  margin-bottom: 16px;
+  color: var(--primary);
+}
+
+.dept-badge {
+  font-size: 14px;
+  background: #dce8f5;
+  padding: 3px 12px;
+  border-radius: 20px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.toolbar .search {
+  flex: 1;
+}
+
+.table-wrap {
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 12px 14px;
+  text-align: right;
+  border: 1px solid var(--border);
+}
+
+thead th {
+  background: #eaf0f7;
+}
+
+tbody tr:hover {
+  background: #f7f9fc;
+}
+
+th:first-child,
+td:first-child {
+  width: 60px;
+  text-align: center;
+}
+
+th:last-child,
+td:last-child {
+  width: 170px;
+  text-align: center;
+}
+
+.empty {
+  text-align: center;
+  padding: 24px;
+  color: #6b7785;
+}
+
+.print-meta {
+  display: none;
+}
+
+/* ===== نافذة الإضافة/التعديل ===== */
+dialog {
+  margin: auto;
+  border: none;
+  border-radius: 14px;
+  padding: 26px;
+  width: 400px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+}
+
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+dialog form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+dialog h3 {
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+/* جدول طويل: تمرير داخلي مع بقاء العناوين ظاهرة */
+.table-wrap {
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  max-height: 70vh;
+  overflow: auto;
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  width: auto;
+}
+/* عمود رقم الحساب أعرض */
+th:nth-child(2),
+td:nth-child(2) {
+  width: 180px;
+  white-space: nowrap;
+}
+.count {
+  margin-bottom: 8px;
+  color: #6b7785;
+  font-size: 14px;
+}
+/* ===== اسم المبرمج في صندوق الدخول ===== */
+.login-credit {
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+/* ===== الصفحة الرئيسية البيضاء ===== */
+body.is-home {
+  background: #fff;
+}
+
+.home-credit {
+  position: fixed;
+  bottom: 16px;
+  left: 20px;
+  text-align: left;
+  line-height: 1.8;
+  color: #444;
+}
+
+.home-credit p {
+  font-weight: 600;
+}
+
+.home-credit a {
+  direction: ltr;
+  display: inline-block;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.home-credit a:hover {
+  text-decoration: underline;
+}
+
+.nav-link[data-page] {
+  cursor: pointer;
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+.btn-danger:hover {
+  background: #a02e22;
+}
+
+.btn-small.btn-danger {
+  background: #fbe9e7;
+  color: var(--danger);
+}
+
+.btn-small.btn-danger:hover {
+  background: #f5cfca;
+}
+
+#confirm-dialog h3 {
+  color: var(--danger);
+  margin-bottom: 10px;
+}
+
+#confirm-dialog p {
+  line-height: 1.7;
+  margin-bottom: 10px;
+}
+/* حقل الاسم: حجم ثابت، النص ينزل تلقائياً، وسكرول عند الزيادة */
+textarea {
+  width: 100%;
+  height: 84px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+  background: #fff;
+  resize: none;
+  overflow-y: auto;
+}
+
+textarea:focus {
+  outline: 2px solid var(--primary);
+  border-color: transparent;
+}
+
+/* الجدول: عرض الأعمدة ثابت، والاسم الطويل ينزل لسطر جديد */
+table {
+  table-layout: fixed;
+}
+
+td {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+td:nth-child(2) {
+  white-space: nowrap;
+}
+
+/* إخفاء الشارة والسطر الفارغين */
+.dept-badge:empty,
+.print-meta:empty {
+  display: none !important;
+}
+
+/* صفوف الهوامش: مخفية على الشاشة، تظهر عند الطباعة فقط */
+.print-spacer {
+  display: none;
+}
+
+/* هوامش الصفحة = 0 حتى يختفي ما يضيفه المتصفح تلقائياً (التاريخ والوقت والعنوان والرابط) */
+@page {
+  margin: 0;
+}
+
+@media print {
+  .print-spacer {
+    display: table-row;
+  }
+
+  .print-spacer th,
+  .print-spacer td {
+    height: 12mm;
+    padding: 0;
+    border: none !important;
+    background: none !important;
+  }
+
+  .page {
+    padding: 0 12mm;
+  }
+
+  .page-title {
+    margin-top: 12mm;
+  }
+}
+@media print {
+  .home-credit {
+    display: none;
+  }
+}
+
+/* ===== الطباعة ===== */
+@media print {
+  body {
+    background: #fff;
+  }
+
+  .navbar,
+  .toolbar,
+  .no-print,
+  .empty {
+    display: none !important;
+  }
+
+  #content {
+    padding: 0;
+    max-width: none;
+  }
+
+  .print-meta {
+    display: block;
+    margin-bottom: 12px;
+    color: #444;
+  }
+
+  .table-wrap {
+    border: none;
+  }
+
+  th,
+  td {
+    border: 1px solid #000;
+  }
+
+  thead th {
+    background: #eee !important;
+  }
+        .table-wrap {
+          max-height: none;
+          overflow: visible;
+        }
+    
+        .count {
+          display: none;
+        }
+    
+        tr {
+          page-break-inside: avoid;
+        }
+      }
