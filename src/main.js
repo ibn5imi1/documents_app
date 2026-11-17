@@ -5,11 +5,15 @@ import { $ } from './core/utils.js'
 // ===== صفحات النافبار: كل صفحة في ملفها =====
 import accounts from './pages/guide/accounts.js'
 import costCenters from './pages/guide/costcenters.js'
+import payment from './pages/documents/payment.js'
+import journal from './pages/documents/journal.js'
+import receipt from './pages/documents/receipt.js'
 
-const PAGES = [accounts, costCenters]
+const PAGES = [accounts, costCenters, payment, journal, receipt]
 
 // ===== مؤقت للتجربة، لاحقاً يُستبدل بقاعدة البيانات =====
-const USERS = [{ username: 'admin', password: '1234' }]
+// name = اسم المحاسب الذي يظهر في المستندات
+const USERS = [{ username: 'admin', password: '1234', name: 'المدير' }]
 
 const pageMap = {}
 let currentPageId = 'page-home'
@@ -61,13 +65,14 @@ $('#login-form').addEventListener('submit', (e) => {
   const username = $('#username').value.trim()
   const password = $('#password').value
 
-  const ok = USERS.some((u) => u.username === username && u.password === password)
-  if (!ok) {
+  const user = USERS.find((u) => u.username === username && u.password === password)
+  if (!user) {
     $('#login-error').textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة'
     return
   }
 
   $('#login-error').textContent = ''
+  state.user = { username: user.username, name: user.name }
   state.dept = deptSelect.value
   showScreen('main-layout')
   showPage('page-home') // الصفحة البيضاء أولاً
@@ -75,5 +80,7 @@ $('#login-form').addEventListener('submit', (e) => {
 
 $('#btn-logout').addEventListener('click', () => {
   $('#password').value = ''
+  state.user = null
+  PAGES.forEach((p) => p.reset?.()) // تفريغ أي مستند غير محفوظ
   showScreen('screen-login')
 })

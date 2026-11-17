@@ -4,7 +4,10 @@ export const DEPARTMENTS = {
     mechanical: 'الميكانيك',
 }
 
-// القسم الحالي، يتشاركه كل الملفات
+// العملات: لإضافة عملة جديدة يكفي إضافتها هنا
+export const CURRENCIES = ['دينار', 'دولار']
+
 export const state = {
-    dept: Object.keys(DEPARTMENTS)[0],
+    dept: Object.keys(DEPARTMENTS)[0], // القسم الحالي
+    user: null, // المستخدم الحالي { username, name }
 }
