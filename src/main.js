@@ -1,6 +1,7 @@
 import './style.css'
 import { state, DEPARTMENTS } from './core/state.js'
 import { $ } from './core/utils.js'
+import { setNavigator } from './core/nav.js'
 
 // ===== صفحات النافبار: كل صفحة في ملفها =====
 import accounts from './pages/guide/accounts.js'
@@ -8,11 +9,18 @@ import costCenters from './pages/guide/costcenters.js'
 import payment from './pages/documents/payment.js'
 import journal from './pages/documents/journal.js'
 import receipt from './pages/documents/receipt.js'
+import paymentReport from './pages/reports/paymentReport.js'
+import journalReport from './pages/reports/journalReport.js'
+import receiptReport from './pages/reports/receiptReport.js'
 
-const PAGES = [accounts, costCenters, payment, journal, receipt]
+const PAGES = [
+  accounts, costCenters,
+  payment, journal, receipt,
+  paymentReport, journalReport, receiptReport,
+]
 
 // ===== مؤقت للتجربة، لاحقاً يُستبدل بقاعدة البيانات =====
-// name = اسم المحاسب الذي يظهر في المستندات
+// name = اسم المحاسب الذي يظهر مسبقاً في مستند الصرف
 const USERS = [{ username: 'admin', password: '1234', name: 'المدير' }]
 
 const pageMap = {}
@@ -39,6 +47,8 @@ function showPage(id) {
   currentPageId = id
   pageMap[id]?.render()
 }
+
+setNavigator(showPage) // ليتمكن أي ملف من الانتقال لصفحة أخرى
 
 document.querySelectorAll('[data-page]').forEach((item) => {
   item.addEventListener('click', () => showPage(item.dataset.page))
@@ -74,6 +84,7 @@ $('#login-form').addEventListener('submit', (e) => {
   $('#login-error').textContent = ''
   state.user = { username: user.username, name: user.name }
   state.dept = deptSelect.value
+  PAGES.forEach((p) => p.reset?.()) // نماذج نظيفة باسم المحاسب الحالي
   showScreen('main-layout')
   showPage('page-home') // الصفحة البيضاء أولاً
 })

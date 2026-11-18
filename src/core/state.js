@@ -2,6 +2,7 @@ export const DEPARTMENTS = {
     all: 'الكل',
     pharmacy: 'الصيدلة',
     mechanical: 'الميكانيك',
+    anesthesia: 'التخدير',
 }
 
 // العملات: لإضافة عملة جديدة يكفي إضافتها هنا

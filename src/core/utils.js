@@ -16,3 +16,10 @@ export function compareNumbers(a, b) {
     if (a1 !== b1) return a1 < b1 ? -1 : 1
     return a2.localeCompare(b2, undefined, { numeric: true })
 }
+
+// تحويل الأرقام العربية (٠١٢) إلى لاتينية
+export const toLatin = (s) =>
+    s
+        .replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+        .replace(/٫/g, '.')
+        .replace(/[٬،]/g, ',')

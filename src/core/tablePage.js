@@ -1,5 +1,5 @@
 import { state, DEPARTMENTS } from './state.js'
-import { scopeOf, loadRows, saveRows } from './storage.js'
+import { scopeOf, loadRows, saveRows, loadVisible } from './storage.js'
 import { seedIfEmpty } from './seed.js'
 import { $, normalize, compareNumbers } from './utils.js'
 
@@ -10,11 +10,11 @@ const numberInput = $('#entry-number')
 const nameInput = $('#entry-name')
 const entryError = $('#entry-error')
 
-let editing = null // { page, rowId }
+let editing = null // { page, rowId, scope }
 
 function openDialog(page, row = null) {
     const cfg = page.cfg
-    editing = { page, rowId: row ? row.id : null }
+    editing = { page, rowId: row ? row.id : null, scope: row ? row.scope : null }
 
     $('#dialog-title').textContent = row ? `تعديل: ${cfg.title}` : cfg.addLabel
     $('#label-number').textContent = cfg.numLabel
@@ -37,12 +37,17 @@ entryForm.addEventListener('submit', (e) => {
         return
     }
 
-    const { page, rowId } = editing
+    const { page, rowId, scope: rowScope } = editing
     const cfg = page.cfg
-    const scope = scopeOf(cfg)
+
+    // السجل الجديد يُحفظ في القسم المختار حالياً (وإذا كان "الكل" يظهر في كل الأقسام)
+    // والسجل المعدَّل يبقى في قسمه الأصلي
+    const scope = rowId ? rowScope : scopeOf(cfg)
     const rows = loadRows(cfg.storeKey, scope)
 
-    if (rows.some((r) => r.number === number && r.id !== rowId)) {
+    // الرقم لا يتكرر بين السجلات التي تظهر معاً في هذا القسم
+    const visible = cfg.global ? rows : loadVisible(cfg.storeKey, scope)
+    if (visible.some((r) => r.number === number && r.id !== rowId)) {
         entryError.textContent = 'هذا الرقم موجود مسبقاً'
         return
     }
@@ -61,6 +66,7 @@ entryForm.addEventListener('submit', (e) => {
 })
 
 $('#btn-cancel').addEventListener('click', () => dialog.close())
+
 // زر Enter في حقل الاسم يحفظ مباشرة (بدل إنشاء سطر جديد)
 nameInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
@@ -82,10 +88,10 @@ function askDelete(page, row) {
 $('#btn-confirm-delete').addEventListener('click', () => {
     const { page, row } = deleting
     const cfg = page.cfg
-    const scope = scopeOf(cfg)
 
-    const rows = loadRows(cfg.storeKey, scope).filter((r) => r.id !== row.id)
-    saveRows(cfg.storeKey, scope, rows)
+    // الحذف من القسم الذي حُفظ فيه السجل فعلاً
+    const rows = loadRows(cfg.storeKey, row.scope).filter((r) => r.id !== row.id)
+    saveRows(cfg.storeKey, row.scope, rows)
 
     confirmDialog.close()
     page.render()
@@ -130,7 +136,7 @@ export function createTablePage(cfg) {
 
     <div class="table-wrap">
       <table>
-                <thead>
+        <thead>
           <tr class="print-spacer"><th colspan="4"></th></tr>
           <tr>
             <th>#</th>
@@ -143,7 +149,6 @@ export function createTablePage(cfg) {
         <tfoot>
           <tr class="print-spacer"><td colspan="4"></td></tr>
         </tfoot>
-        <tbody></tbody>
       </table>
       <p class="empty hidden">لا توجد بيانات</p>
     </div>
@@ -154,7 +159,11 @@ export function createTablePage(cfg) {
     function render() {
         const term = normalize($('.search', el).value.trim())
 
-        const all = loadRows(cfg.storeKey, scopeOf(cfg))
+        // الصفحة العامة: كل بياناتها في "all". وغير العامة: سجلات القسم + سجلات "الكل"
+        const all = cfg.global
+            ? loadRows(cfg.storeKey, 'all').map((r) => ({ ...r, scope: 'all' }))
+            : loadVisible(cfg.storeKey, state.dept)
+
         const rows = all
             .filter(
                 (r) =>

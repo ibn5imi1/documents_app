@@ -1,25 +1,14 @@
 import { state, DEPARTMENTS, CURRENCIES } from '../../core/state.js'
-import { loadRows, saveRows } from '../../core/storage.js'
-import { $ } from '../../core/utils.js'
+import { loadRows, saveRows, loadVisible } from '../../core/storage.js'
+import { $, toLatin } from '../../core/utils.js'
+import { todayISO } from '../../core/dates.js'
+import { createDateField } from '../../core/datePicker.js'
+import { navigate } from '../../core/nav.js'
 
-const STORE_KEY = 'payment-vouchers' // المستندات تُحفظ لكل قسم على حدة
+export const STORE_KEY = 'payment-vouchers' // المستندات تُحفظ لكل قسم على حدة
 const ACCOUNTS_STORE = 'accounts' // الدليل المحاسبي (مشترك لكل الأقسام)
 
 /* ================== أدوات ================== */
-// تحويل الأرقام العربية (٠١٢) إلى لاتينية
-const toLatin = (s) =>
-    s
-        .replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
-        .replace(/٫/g, '.')
-        .replace(/[٬،]/g, ',')
-
-const todayISO = () => {
-    const d = new Date()
-    const mm = String(d.getMonth() + 1).padStart(2, '0')
-    const dd = String(d.getDate()).padStart(2, '0')
-    return `${d.getFullYear()}-${mm}-${dd}`
-}
-
 // المبالغ تُحسب بالألف (3 خانات عشرية) لتفادي أخطاء الكسور العشرية
 const toMilli = (text) => {
     const n = parseFloat(toLatin(text).replace(/,/g, ''))
@@ -34,27 +23,31 @@ el.className = 'page hidden'
 el.innerHTML = `
   <h2 class="page-title">مستند صرف <span class="dept-badge"></span></h2>
 
+  <div class="edit-banner hidden">
+    وضع التعديل: المستند رقم <b class="edit-number"></b>
+  </div>
+
   <div class="voucher-form">
-    <label class="field"><span>رقم المستند</span>
+    <label class="field"><span>رقم المستند <em class="req">*</em></span>
       <input class="f-number" type="text" autocomplete="off" /></label>
-    <label class="field"><span>تاريخ المستند</span>
-      <input class="f-date" type="date" /></label>
+    <div class="field"><span>تاريخ المستند <em class="req">*</em></span>
+      <div class="host-date"></div></div>
     <label class="field span-2"><span>المستفيد</span>
       <input class="f-beneficiary" type="text" autocomplete="off" /></label>
 
     <label class="field"><span>رقم الصك</span>
       <input class="f-cheque-number" type="text" autocomplete="off" /></label>
-    <label class="field"><span>تاريخ الصك</span>
-      <input class="f-cheque-date" type="date" /></label>
+    <div class="field"><span>تاريخ الصك</span>
+      <div class="host-cheque-date"></div></div>
     <label class="field"><span>العملة</span>
       <select class="f-currency"></select></label>
     <label class="field"><span>رقم اليومية</span>
       <input class="f-journal" type="text" autocomplete="off" /></label>
 
-    <label class="field"><span>حالة القيد</span>
-      <input class="f-status" type="text" autocomplete="off" /></label>
-    <label class="field"><span>المحاسب</span>
-      <input class="f-accountant" type="text" readonly /></label>
+    <label class="field span-2"><span>المحاسب</span>
+      <input class="f-accountant" type="text" autocomplete="off" /></label>
+    <label class="field span-2"><span>المدير</span>
+      <input class="f-manager" type="text" autocomplete="off" /></label>
 
     <label class="field span-4"><span>البيان</span>
       <textarea class="f-statement"></textarea></label>
@@ -97,7 +90,15 @@ el.innerHTML = `
 const tbody = $('tbody', el)
 let accountMap = new Map() // رقم الدليل -> اسم الدليل
 let formDept = null
+let editingId = null // null = مستند جديد
+let editingScope = null // القسم الذي حُفظ فيه المستند الجاري تعديله
 let messageTimer = null
+
+// حقلا التاريخ (تقويم عربي)
+const docDate = createDateField()
+const chequeDate = createDateField()
+$('.host-date', el).appendChild(docDate.el)
+$('.host-cheque-date', el).appendChild(chequeDate.el)
 
 // قائمة العملات
 for (const currency of CURRENCIES) {
@@ -139,6 +140,16 @@ function addLine() {
     return tr
 }
 
+// لا يمكن إدخال مدين ودائن في نفس السطر: عند الكتابة في أحدهما يُقفل الآخر
+function syncLock(tr) {
+    const debit = $('.in-debit', tr)
+    const credit = $('.in-credit', tr)
+    const hasDebit = debit.value.trim() !== ''
+    const hasCredit = credit.value.trim() !== ''
+    debit.disabled = hasCredit && !hasDebit
+    credit.disabled = hasDebit && !hasCredit
+}
+
 function removeLine(tr) {
     if (tbody.children.length > 1) {
         tr.remove()
@@ -146,6 +157,7 @@ function removeLine(tr) {
         // آخر سطر: نفرّغه بدل حذفه
         tr.querySelectorAll('input').forEach((i) => (i.value = ''))
         updateName(tr)
+        syncLock(tr)
     }
 }
 
@@ -175,12 +187,14 @@ function updateTotals() {
 
 tbody.addEventListener('input', (e) => {
     const target = e.target
+    const tr = target.closest('tr')
     if (target.classList.contains('amount')) {
         target.value = toLatin(target.value).replace(/[^\d.,]/g, '')
+        syncLock(tr)
     }
     if (target.classList.contains('in-acc')) {
         target.value = toLatin(target.value).replace(/\s/g, '')
-        updateName(target.closest('tr'))
+        updateName(tr)
     }
     updateTotals()
 })
@@ -195,6 +209,7 @@ tbody.addEventListener('focusout', (e) => {
     if (e.target.classList.contains('amount')) {
         const milli = toMilli(e.target.value)
         e.target.value = milli ? fmtMilli(milli) : ''
+        syncLock(e.target.closest('tr'))
     }
 })
 
@@ -225,15 +240,31 @@ function message(type, text) {
     }
 }
 
+/* ================== وضع التعديل ================== */
+function setEditMode(doc) {
+    const on = Boolean(doc)
+    $('.edit-banner', el).classList.toggle('hidden', !on)
+    $('.edit-number', el).textContent = doc ? doc.number : ''
+    $('.btn-save', el).textContent = on ? 'حفظ التعديل' : 'حفظ المستند'
+    $('.btn-new', el).textContent = on ? 'إلغاء التعديل' : 'مستند جديد'
+}
+
 /* ================== مستند جديد ================== */
 function resetForm() {
-    for (const cls of ['.f-number', '.f-beneficiary', '.f-cheque-number', '.f-cheque-date', '.f-journal', '.f-status', '.f-statement']) {
+    editingScope = null
+    setEditMode(null)
+
+    for (const cls of [
+        '.f-number', '.f-beneficiary', '.f-cheque-number', '.f-journal',
+        '.f-manager', '.f-statement',
+    ]) {
         $(cls, el).value = ''
     }
-    $('.f-date', el).value = todayISO()
+    docDate.setValue(todayISO())
+    chequeDate.setValue('')
     $('.f-currency', el).value = CURRENCIES[0]
     $('.f-cancelled', el).checked = false
-    $('.f-accountant', el).value = state.user?.name ?? ''
+    $('.f-accountant', el).value = state.user?.name ?? '' // يمكن تغييره
 
     tbody.replaceChildren()
     addLine()
@@ -242,17 +273,56 @@ function resetForm() {
     message('', '')
 }
 
+// يُستدعى من صفحة الكشف: يملأ الحقول بمستند محفوظ
+function loadForEdit(doc) {
+    refreshAccounts()
+    resetForm()
+    editingId = doc.id
+    editingScope = doc.scope
+    formDept = state.dept
+    setEditMode(doc)
+
+    $('.f-number', el).value = doc.number
+    docDate.setValue(doc.date)
+    $('.f-beneficiary', el).value = doc.beneficiary ?? ''
+    $('.f-cheque-number', el).value = doc.chequeNumber ?? ''
+    chequeDate.setValue(doc.chequeDate ?? '')
+    $('.f-currency', el).value = doc.currency ?? CURRENCIES[0]
+    $('.f-journal', el).value = doc.journalNumber ?? ''
+    $('.f-accountant', el).value = doc.accountant ?? ''
+    $('.f-manager', el).value = doc.manager ?? ''
+    $('.f-statement', el).value = doc.statement ?? ''
+    $('.f-cancelled', el).checked = Boolean(doc.cancelled)
+
+    tbody.replaceChildren()
+    for (const line of doc.lines?.length ? doc.lines : [{}]) {
+        const tr = addLine()
+        $('.in-debit', tr).value = line.debit ? fmtMilli(Math.round(line.debit * 1000)) : ''
+        $('.in-credit', tr).value = line.credit ? fmtMilli(Math.round(line.credit * 1000)) : ''
+        $('.in-acc', tr).value = line.accountNumber ?? ''
+        updateName(tr)
+        syncLock(tr)
+    }
+    updateTotals()
+}
+
 /* ================== الحفظ ================== */
 function save() {
-    const number = $('.f-number', el).value.trim()
-    const date = $('.f-date', el).value
+    const number = toLatin($('.f-number', el).value).trim()
+    const date = docDate.getValue()
     const cancelled = $('.f-cancelled', el).checked
 
+    // الحقلان الإلزاميان الوحيدان: رقم المستند وتاريخه
     if (!number) return message('error', 'أدخل رقم المستند')
-    if (!date) return message('error', 'أدخل تاريخ المستند')
+    if (!date) return message('error', 'اختر تاريخ المستند')
 
-    const docs = loadRows(STORE_KEY, state.dept)
-    if (docs.some((d) => d.number === number)) {
+    // المستند الجديد يُحفظ في القسم المختار حالياً (وإذا كان "الكل" يظهر في كل الأقسام)
+    // والمستند المعدَّل يبقى في قسمه الأصلي
+    const scope = editingId ? editingScope : state.dept
+    const docs = loadRows(STORE_KEY, scope)
+
+    // رقم المستند لا يتكرر بين المستندات التي تظهر معاً في هذا القسم
+    if (loadVisible(STORE_KEY, scope).some((d) => d.number === number && d.id !== editingId)) {
         return message('error', 'رقم المستند موجود مسبقاً في هذا القسم')
     }
 
@@ -276,7 +346,7 @@ function save() {
             const n = index + 1
             if (!accNumber) return message('error', `السطر ${n}: أدخل رقم الدليل`)
             if (!accName) return message('error', `السطر ${n}: رقم الدليل غير موجود في الدليل المحاسبي`)
-            if (d && c) return message('error', `السطر ${n}: أدخل مديناً أو دائناً وليس كليهما`)
+            if (d && c) return message('error', `السطر ${n}: لا يمكن إدخال مدين ودائن في نفس السطر`)
             if (!d && !c) return message('error', `السطر ${n}: أدخل مبلغ المدين أو الدائن`)
         }
 
@@ -300,47 +370,62 @@ function save() {
         }
     }
 
-    docs.push({
-        id: Date.now(),
+    const data = {
         number,
         date,
         beneficiary: $('.f-beneficiary', el).value.trim(),
-        chequeNumber: $('.f-cheque-number', el).value.trim(),
-        chequeDate: $('.f-cheque-date', el).value,
+        chequeNumber: toLatin($('.f-cheque-number', el).value).trim(),
+        chequeDate: chequeDate.getValue(),
         currency: $('.f-currency', el).value,
-        journalNumber: $('.f-journal', el).value.trim(),
-        entryStatus: $('.f-status', el).value.trim(),
+        journalNumber: toLatin($('.f-journal', el).value).trim(),
+        accountant: $('.f-accountant', el).value.trim(),
+        manager: $('.f-manager', el).value.trim(),
         statement: $('.f-statement', el).value.trim(),
         cancelled,
         lines,
         totalDebit: debit / 1000,
         totalCredit: credit / 1000,
-        accountant: state.user?.name ?? '',
-        createdAt: new Date().toISOString(),
-    })
+    }
 
-    saveRows(STORE_KEY, state.dept, docs)
+    // حفظ التعديل
+    if (editingId) {
+        const index = docs.findIndex((d) => d.id === editingId)
+        if (index === -1) return message('error', 'هذا المستند لم يعد موجوداً')
+        docs[index] = { ...docs[index], ...data, updatedAt: new Date().toISOString() }
+        saveRows(STORE_KEY, scope, docs)
+        resetForm()
+        navigate('page-payment-report') // الرجوع إلى الكشف
+        return
+    }
+
+    // مستند جديد
+    docs.push({ id: Date.now(), ...data, createdAt: new Date().toISOString() })
+    saveRows(STORE_KEY, scope, docs)
     resetForm()
     message('ok', `تم حفظ مستند الصرف رقم ${number}`)
 }
 
 $('.btn-save', el).addEventListener('click', save)
-$('.btn-new', el).addEventListener('click', resetForm)
+$('.btn-new', el).addEventListener('click', () => {
+    const wasEditing = editingId !== null
+    resetForm()
+    if (wasEditing) navigate('page-payment-report') // إلغاء التعديل
+})
 
 /* ================== واجهة الصفحة ================== */
 // تُنفَّذ كلما فُتحت الصفحة أو تغيّر القسم
 function render() {
     refreshAccounts()
-    $('.dept-badge', el).textContent = DEPARTMENTS[state.dept]
+    $('.dept-badge', el).textContent =
+        state.dept === 'all' ? 'الكل: يظهر المستند في جميع الأقسام' : DEPARTMENTS[state.dept]
 
     // المستندات لكل قسم: عند تغيير القسم نبدأ مستنداً جديداً حتى لا يُحفظ في القسم الخطأ
     if (formDept !== null && formDept !== state.dept) resetForm()
     formDept = state.dept
 
-    $('.f-accountant', el).value = state.user?.name ?? ''
     tbody.querySelectorAll('tr').forEach(updateName)
 }
 
 resetForm()
 
-export default { id: 'page-payment', el, render, reset: resetForm }
+export default { id: 'page-payment', el, render, reset: resetForm, loadForEdit }
