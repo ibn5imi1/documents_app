@@ -12,11 +12,13 @@ import receipt from './pages/documents/receipt.js'
 import paymentReport from './pages/reports/paymentReport.js'
 import journalReport from './pages/reports/journalReport.js'
 import receiptReport from './pages/reports/receiptReport.js'
+import generalJournal from './pages/registers/generalJournal.js'
 
 const PAGES = [
   accounts, costCenters,
   payment, journal, receipt,
   paymentReport, journalReport, receiptReport,
+  generalJournal
 ]
 
 // ===== مؤقت للتجربة، لاحقاً يُستبدل بقاعدة البيانات =====

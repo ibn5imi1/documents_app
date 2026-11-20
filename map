@@ -20,6 +20,8 @@ src/
     │   ├── paymentReport.js      ← كشف مستندات صرف
     │   ├── journalReport.js      ← مؤقت
     │   └── receiptReport.js      ← مؤقت
+    ├── registers/ مجلد التقارير
+        ├── generalJournal.js
     └── guide/               ← مجلد قائمة "الدليل"
         ├── accounts.js      ← الدليل المحاسبي
         ├── accounts.txt     ← بياناته الافتراضية
