@@ -26,3 +26,8 @@ src/
         ├── accounts.js      ← الدليل المحاسبي
         ├── accounts.txt     ← بياناته الافتراضية
         └── costcenters.js   ← مراكز التكلفة
+.gitignore
+index.html
+map
+package-lock.json
+package.json
