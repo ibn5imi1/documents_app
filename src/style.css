@@ -916,10 +916,6 @@ input.date-input {
 .reg-table thead { position: sticky; top: 0; z-index: 2; }
 .reg-table th.root-head { background: #dce8f5; }
 
-/* ===== ملاحظة الجذر في مستند الصرف ===== */
-.root-note { font-weight: 700; }
-.root-note.ok { color: #1e5aa8; }
-.root-note.bad { color: var(--danger); }
 
 @media print {
   .print-spacer {

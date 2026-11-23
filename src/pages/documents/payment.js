@@ -17,8 +17,7 @@ const toMilli = (text) => {
 const fmtMilli = (m) =>
   (m / 1000).toLocaleString("en-US", { maximumFractionDigits: 3 });
 
-// الجذر = أول رقمين من رقم الدليل (مثل 11 أو 12 أو 22)
-const rootOf = (accNumber) => accNumber.slice(0, 2);
+
 
 /* ================== بناء الصفحة ================== */
 const el = document.createElement("section");
@@ -81,7 +80,6 @@ el.innerHTML = `
     <div class="total-box"><span>مجموع المدين</span><strong class="sum-debit">0</strong></div>
     <div class="total-box"><span>مجموع الدائن</span><strong class="sum-credit">0</strong></div>
     <p class="balance-note"></p>
-    <p class="root-note"></p>
   </div>
 
   <div class="voucher-actions">
@@ -169,43 +167,27 @@ function removeLine(tr) {
 }
 
 function updateTotals() {
-  let debit = 0;
-  let credit = 0;
-  const roots = new Set();
+  let debit = 0
+  let credit = 0
 
-  tbody.querySelectorAll("tr").forEach((tr) => {
-    debit += toMilli($(".in-debit", tr).value);
-    credit += toMilli($(".in-credit", tr).value);
-    const acc = $(".in-acc", tr).value.trim();
-    if (acc) roots.add(rootOf(acc));
-  });
+  tbody.querySelectorAll('tr').forEach((tr) => {
+    debit += toMilli($('.in-debit', tr).value)
+    credit += toMilli($('.in-credit', tr).value)
+  })
 
-  $(".sum-debit", el).textContent = fmtMilli(debit);
-  $(".sum-credit", el).textContent = fmtMilli(credit);
+  $('.sum-debit', el).textContent = fmtMilli(debit)
+  $('.sum-credit', el).textContent = fmtMilli(credit)
 
-  const note = $(".balance-note", el);
+  const note = $('.balance-note', el)
   if (debit === 0 && credit === 0) {
-    note.textContent = "";
-    note.className = "balance-note";
+    note.textContent = ''
+    note.className = 'balance-note'
   } else if (debit === credit) {
-    note.textContent = "✓ المدين والدائن متطابقان";
-    note.className = "balance-note ok";
+    note.textContent = '✓ المدين والدائن متطابقان'
+    note.className = 'balance-note ok'
   } else {
-    note.textContent = `المدين والدائن غير متطابقين، الفرق: ${fmtMilli(Math.abs(debit - credit))}`;
-    note.className = "balance-note bad";
-  }
-
-  // الجذور المستعملة: يجب أن تكون كلها جذراً واحداً
-  const rootNote = $(".root-note", el);
-  if (roots.size === 0) {
-    rootNote.textContent = "";
-    rootNote.className = "root-note";
-  } else if (roots.size === 1) {
-    rootNote.textContent = `جذر المستند: ${[...roots][0]}`;
-    rootNote.className = "root-note ok";
-  } else {
-    rootNote.textContent = `الأسطر على أكثر من جذر (${[...roots].join("، ")}): يجب أن تكون كلها على جذر واحد`;
-    rootNote.className = "root-note bad";
+    note.textContent = `المدين والدائن غير متطابقين، الفرق: ${fmtMilli(Math.abs(debit - credit))}`
+    note.className = 'balance-note bad'
   }
 }
 
@@ -383,22 +365,18 @@ function save() {
     const accName = accountMap.get(accNumber) ?? "";
 
     // المستند البطال لا يُفحص جدوله
-    if (!cancelled) {
-      const n = index + 1;
-      if (!accNumber) return message("error", `السطر ${n}: أدخل رقم الدليل`);
-      if (!accName)
-        return message(
-          "error",
-          `السطر ${n}: رقم الدليل غير موجود في الدليل المحاسبي`,
-        );
-      if (d && c)
-        return message(
-          "error",
-          `السطر ${n}: لا يمكن إدخال مدين ودائن في نفس السطر`,
-        );
-      if (!d && !c)
-        return message("error", `السطر ${n}: أدخل مبلغ المدين أو الدائن`);
-    }
+    // if (!cancelled) {
+    //   if (lines.length === 0) {
+    //     return message('error', 'أضف سطراً واحداً على الأقل في الجدول')
+    //   }
+
+    //   if (debit !== credit) {
+    //     return message(
+    //       'error',
+    //       `لا يمكن حفظ المستند: المدين والدائن غير متطابقين (الفرق ${fmtMilli(Math.abs(debit - credit))})`
+    //     )
+    //   }
+    // }
 
     debit += d;
     credit += c;
@@ -414,15 +392,6 @@ function save() {
   if (!cancelled) {
     if (lines.length === 0) {
       return message("error", "أضف سطراً واحداً على الأقل في الجدول");
-    }
-
-    // جميع الأسطر على نفس الجذر (أول رقمين من رقم الدليل)
-    const roots = [...new Set(lines.map((l) => rootOf(l.accountNumber)))];
-    if (roots.length > 1) {
-      return message(
-        "error",
-        `جميع أسطر المستند يجب أن تكون على نفس الجذر (أول رقمين من رقم الدليل). الجذور الموجودة: ${roots.join("، ")}`,
-      );
     }
 
     if (debit !== credit) {
