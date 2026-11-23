@@ -12,20 +12,23 @@ src/
 │   ├── tablePage.js         ← قالب صفحة الجدول (إضافة/بحث/تعديل/طباعة)
 │   └── confirm.js           ← (نافذة تأكيد الحذف)
 └── pages/
-    ├── documents/           ← مجلد قائمة "مستندات"
-    │   ├── payment.js       ← مستند صرف
-    │   ├── journal.js       ← مستند قيد (مؤقت)
-    │   └── receipt.js       ← وصل قبض (مؤقت)
-    ├── reports/             ← مجلد قائمة "كشوفات"
-    │   ├── paymentReport.js      ← كشف مستندات صرف
-    │   ├── journalReport.js      ← مؤقت
-    │   └── receiptReport.js      ← مؤقت
-    ├── registers/ مجلد التقارير
-        ├── generalJournal.js
-    └── guide/               ← مجلد قائمة "الدليل"
-        ├── accounts.js      ← الدليل المحاسبي
-        ├── accounts.txt     ← بياناته الافتراضية
-        └── costcenters.js   ← مراكز التكلفة
+│    ├── documents/           ← مجلد قائمة "مستندات"
+│    │   ├── payment.js       ← مستند صرف
+│    │   ├── journal.js       ← مستند قيد (مؤقت)
+│   │   └── receipt.js       ← وصل قبض (مؤقت)
+│    ├── reports/             ← مجلد قائمة "كشوفات"
+│    │   ├── paymentReport.js      ← كشف مستندات صرف
+│    │   ├── journalReport.js      ← مؤقت
+│    │   └── receiptReport.js      ← مؤقت
+│    ├── registers/ مجلد التقارير
+│        ├── generalJournal.js
+│    └── guide/               ← مجلد قائمة "الدليل"
+│       ├── accounts.js      ← الدليل المحاسبي
+│        ├── accounts.txt     ← بياناته الافتراضية
+│        └── costcenters.js   ← مراكز التكلفة
+│
+└──server
+    └── server.js
 .gitignore
 index.html
 map

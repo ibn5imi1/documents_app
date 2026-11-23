@@ -52,6 +52,9 @@ function showPage(id) {
 
 setNavigator(showPage) // ليتمكن أي ملف من الانتقال لصفحة أخرى
 
+// عند العودة للنافذة بعد تعديل من متصفح آخر: نحدّث الصفحة المفتوحة
+window.addEventListener('data-refreshed', () => pageMap[currentPageId]?.render())
+
 document.querySelectorAll('[data-page]').forEach((item) => {
   item.addEventListener('click', () => showPage(item.dataset.page))
 })
