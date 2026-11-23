@@ -94,7 +94,7 @@ el.innerHTML = `
     <label class="field"><span>إظهار التفاصيل</span>
       <select class="g-detail">
         <option value="all">كل التفاصيل</option>
-        <option value="many">من مذكورين</option>
+        <option value="many">من / الى مذكورين</option>
       </select></label>
     <div class="filter-actions">
       <button class="btn btn-primary g-show" type="button">عرض</button>
