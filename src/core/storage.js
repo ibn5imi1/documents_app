@@ -1,17 +1,20 @@
 import { state, DEPARTMENTS } from './state.js'
 
-// التخزين: ملف على الكمبيوتر يديره الخادم المحلي (server/server.js).
-// كل المتصفحات (Chrome وBrave وغيرهما) تقرأ وتكتب في نفس الملف.
-// البيانات تُحمَّل في الذاكرة عند فتح البرنامج، فتبقى دوال القراءة سريعة
-// ومتزامنة كما كانت، والكتابة تُرسل للخادم في الخلفية.
+// للتخزين وضعان، يُختار أحدهما تلقائياً عند فتح البرنامج:
+//  1) وضع الخادم: عند فتحه عبر localhost (npm start) تُحفظ البيانات في ملف
+//     على الكمبيوتر، وتشترك فيه كل المتصفحات.
+//  2) وضع المتصفح: عند فتحه من رابط عادي (مثل GitHub Pages) تُحفظ بيانات كل
+//     شخص في متصفحه على جهازه فقط، ولا يراها أحد غيره.
+// البيانات تُحمَّل في الذاكرة عند الفتح، فتبقى دوال القراءة متزامنة وسريعة.
 
 let cache = {}
+let mode = 'local' // 'server' | 'local'
 let pendingWrites = 0
 let writeQueue = Promise.resolve()
 
 const dbKey = (storeKey, scope) => `docs:${storeKey}:${scope}`
 
-/* ================== الاتصال بالخادم ================== */
+/* ================== الاتصال بالخادم (وضع الخادم) ================== */
 async function fetchAll() {
   const res = await fetch('/api/data', { cache: 'no-store' })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -42,8 +45,8 @@ function setSaveBanner(text) {
   banner.textContent = text
 }
 
-// الكتابات تُرسل بالترتيب واحدة بعد الأخرى
-function persist(key, rows) {
+// وضع الخادم: الكتابات تُرسل بالترتيب واحدة بعد الأخرى
+function persistToServer(key, rows) {
   pendingWrites++
   writeQueue = writeQueue
     .then(() => putKey(key, rows))
@@ -56,32 +59,67 @@ function persist(key, rows) {
     })
 }
 
-/* ================== نقل بيانات localStorage القديمة (مرة واحدة لكل متصفح) ================== */
+// وضع المتصفح: الحفظ مباشرة في localStorage
+function persistToBrowser(key, rows) {
+  try {
+    localStorage.setItem(key, JSON.stringify(rows))
+    setSaveBanner('')
+  } catch {
+    setSaveBanner('تعذّر حفظ البيانات في المتصفح (المساحة ممتلئة أو التخزين محظور).')
+  }
+}
+
+/* ================== قراءة localStorage ================== */
+function readBrowserData() {
+  const data = {}
+  for (const key of Object.keys(localStorage)) {
+    if (!key.startsWith('docs:')) continue
+    try {
+      const rows = JSON.parse(localStorage.getItem(key))
+      if (Array.isArray(rows)) data[key] = rows
+    } catch {
+      // مفتاح تالف: نتجاوزه
+    }
+  }
+  return data
+}
+
+// وضع الخادم: نقل بيانات localStorage القديمة مرة واحدة لكل متصفح
 const MIGRATED_FLAG = 'docs-migrated-to-server'
 
 async function migrateFromLocalStorage() {
   if (localStorage.getItem(MIGRATED_FLAG)) return
 
-  const keys = Object.keys(localStorage).filter((k) => k.startsWith('docs:'))
-  for (const key of keys) {
+  for (const [key, rows] of Object.entries(readBrowserData())) {
     if (key in cache) continue // لا نكتب فوق بيانات موجودة في الخادم
     try {
-      const rows = JSON.parse(localStorage.getItem(key))
-      if (!Array.isArray(rows)) continue
       await putKey(key, rows)
       cache[key] = rows
     } catch {
-      // مفتاح تالف: نتجاوزه
+      // نتجاوز المفتاح الذي فشل
     }
   }
   localStorage.setItem(MIGRATED_FLAG, '1')
 }
 
-/* ================== التحميل عند فتح البرنامج ================== */
+/* ================== اختيار الوضع عند فتح البرنامج ================== */
+// على localhost نتوقع وجود الخادم. وفي غير ذلك (GitHub Pages مثلاً) نستعمل المتصفح
+const expectServer = ['localhost', '127.0.0.1'].includes(location.hostname)
+
+let serverData = null
 try {
-  cache = await fetchAll()
+  const data = await fetchAll()
+  if (data && typeof data === 'object' && !Array.isArray(data)) serverData = data
+} catch {
+  serverData = null
+}
+
+if (serverData) {
+  mode = 'server'
+  cache = serverData
   await migrateFromLocalStorage()
-} catch (error) {
+} else if (expectServer) {
+  // نحن على localhost لكن الخادم متوقف: لا نكمل حتى لا تتفرق بياناتك بين مكانين
   document.body.innerHTML = `
     <div style="font-family:Tahoma,Arial,sans-serif;direction:rtl;max-width:520px;margin:80px auto;
                 padding:24px;border:1px solid #d5dbe3;border-radius:12px;line-height:1.9">
@@ -89,11 +127,15 @@ try {
       <p>شغّل البرنامج بالأمر <b dir="ltr">npm start</b>
          ثم افتح <b dir="ltr">http://localhost:3000</b></p>
     </div>`
-  throw error
+  throw new Error('data server is not running')
+} else {
+  mode = 'local'
+  cache = readBrowserData()
 }
 
-/* ================== تحديث البيانات عند العودة للنافذة ================== */
-// إذا عدّلت من متصفح آخر، يأخذ هذا المتصفح آخر نسخة عند العودة إليه
+export const getStorageMode = () => mode
+
+/* ================== تحديث البيانات عند تعديلها من مكان آخر ================== */
 const sameData = (a, b) => {
   const ka = Object.keys(a).sort()
   const kb = Object.keys(b).sort()
@@ -103,8 +145,9 @@ const sameData = (a, b) => {
   )
 }
 
+// وضع الخادم: إذا عدّلت من متصفح آخر، نأخذ آخر نسخة عند العودة للنافذة
 export async function refreshFromServer() {
-  if (pendingWrites > 0) return // عندنا حفظ لم يكتمل
+  if (mode !== 'server' || pendingWrites > 0) return
   try {
     const next = await fetchAll()
     if (pendingWrites > 0) return
@@ -117,10 +160,24 @@ export async function refreshFromServer() {
   }
 }
 
-window.addEventListener('focus', refreshFromServer)
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) refreshFromServer()
-})
+if (mode === 'server') {
+  window.addEventListener('focus', refreshFromServer)
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) refreshFromServer()
+  })
+} else {
+  // وضع المتصفح: تعديل من تبويب آخر في نفس المتصفح
+  window.addEventListener('storage', (e) => {
+    if (!e.key?.startsWith('docs:')) return
+    try {
+      if (e.newValue === null) delete cache[e.key]
+      else cache[e.key] = JSON.parse(e.newValue)
+      window.dispatchEvent(new Event('data-refreshed'))
+    } catch {
+      // قيمة تالفة: نتجاهلها
+    }
+  })
+}
 
 /* ================== واجهة التخزين (كما كانت) ================== */
 // نطاق التخزين: "all" للصفحات العامة (مثل الدليل المحاسبي)، وإلا القسم الحالي
@@ -139,7 +196,8 @@ export function saveRows(storeKey, scope, rows) {
   const key = dbKey(storeKey, scope)
   const copy = structuredClone(rows)
   cache[key] = copy
-  persist(key, copy)
+  if (mode === 'server') persistToServer(key, copy)
+  else persistToBrowser(key, copy)
 }
 
 // الأقسام التي تظهر سجلاتها عند اختيار القسم scope:
