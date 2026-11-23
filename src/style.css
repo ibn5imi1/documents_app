@@ -801,7 +801,6 @@ input.date-input {
   gap: 8px;
 }
 
-
 .rpt-table th.c-docno {
   width: 110px;
 }
@@ -848,7 +847,7 @@ input.date-input {
 
 /* ===== سجل اليومية العامة ===== */
 .filter-box.journal-filter {
-  grid-template-columns: 1fr 1fr 1fr 1.3fr auto;
+  grid-template-columns: 1fr 1fr 1fr 1.3fr 1.1fr auto;
 }
 
 /* الجدول أعرض من الشاشة: السكرول الأفقي يظهر داخل .table-wrap */
@@ -900,7 +899,7 @@ input.date-input {
   line-height: 1.6;
 }
 
-.acc-line+.acc-line {
+.acc-line + .acc-line {
   margin-top: 5px;
   padding-top: 5px;
   border-top: 1px dashed var(--border);
@@ -910,6 +909,17 @@ input.date-input {
   white-space: pre-line;
   line-height: 1.6;
 }
+
+/* ===== رأس الجدول بصفين (أعمدة الجذور) ===== */
+/* الرأس كله يثبت أعلى الجدول عند التمرير، بدل تثبيت كل خلية لوحدها */
+.reg-table thead th { position: static; }
+.reg-table thead { position: sticky; top: 0; z-index: 2; }
+.reg-table th.root-head { background: #dce8f5; }
+
+/* ===== ملاحظة الجذر في مستند الصرف ===== */
+.root-note { font-weight: 700; }
+.root-note.ok { color: #1e5aa8; }
+.root-note.bad { color: var(--danger); }
 
 @media print {
   .print-spacer {
@@ -974,16 +984,16 @@ input.date-input {
   thead th {
     background: #eee !important;
   }
-        .table-wrap {
-          max-height: none;
-          overflow: visible;
-        }
-    
-        .count {
-          display: none;
-        }
-    
-        tr {
-          page-break-inside: avoid;
-        }
-      }
+  .table-wrap {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .count {
+    display: none;
+  }
+
+  tr {
+    page-break-inside: avoid;
+  }
+}

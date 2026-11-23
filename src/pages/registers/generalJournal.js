@@ -7,28 +7,64 @@ import { STORE_KEY as PAYMENT_STORE } from '../documents/payment.js'
 
 const ACCOUNTS_STORE = 'accounts' // الدليل المحاسبي (مشترك لكل الأقسام)
 
+// نص "مذكورين" عند اختيار إظهار التفاصيل = من مذكورين
+const MANY_DEBIT = 'من مذكورين'
+const MANY_CREDIT = 'إلى مذكورين'
+
+// أعمدة السجل الثابتة (الأرقام = العرض بالبكسل)
+const FIXED_COLUMNS = [
+  { cls: 'c-seq', label: 'ت', width: 60 },
+  { cls: 'c-date', label: 'التاريخ', width: 105 },
+  { cls: 'c-debit', label: 'من', width: 400 },
+  { cls: 'c-credit', label: 'إلى', width: 400 },
+  { cls: 'c-stmt', label: 'البيان', width: 400 },
+  { cls: 'c-cheque', label: 'رقم الصك', width: 70 },
+  { cls: 'c-pay', label: 'مستند الصرف', width: 70 },
+  { cls: 'c-jv', label: 'مستند القيد', width: 70 },
+  { cls: 'c-type', label: 'النوع', width: 150 },
+  { cls: 'c-jseq', label: 'ت اليومية', width: 70 },
+  { cls: 'c-amount', label: 'مبلغ المعاملة', width: 140 },
+]
+const ROOT_COL_WIDTH = 130 // عرض كل عمود (مدين أو دائن) داخل مجموعة الجذر
+
+// الجذر = أول رقمين من رقم الدليل
+const rootOf = (accNumber) => String(accNumber ?? '').slice(0, 2)
+
 /* ================== مصادر السجل ================== */
 // كل نوع مستند له دالة تحوّل مستنداته إلى أسطر السجل.
 // لاحقاً نضيف هنا: مستند القيد ووصل القبض.
 function paymentEntries(accountName) {
-    return loadVisible(PAYMENT_STORE, state.dept)
-        .filter((doc) => !doc.cancelled) // المستند البطال لا يظهر في السجل
-        .map((doc) => {
-            const lines = doc.lines ?? []
-            return {
-                id: doc.id,
-                date: doc.date ?? '',
-                type: 'مستند صرف',
-                debitNames: lines.filter((l) => l.debit > 0).map(accountName),
-                creditNames: lines.filter((l) => l.credit > 0).map(accountName),
-                statement: doc.statement ?? '',
-                chequeNumber: doc.chequeNumber ?? '',
-                payNo: doc.number, // مستند الصرف
-                jvNo: '', // مستند القيد (لا ينطبق على مستند الصرف)
-                journalNo: doc.journalNumber ?? '', // ت اليومية
-                amount: doc.totalDebit,
-            }
-        })
+  return loadVisible(PAYMENT_STORE, state.dept)
+    .filter((doc) => !doc.cancelled) // المستند البطال لا يظهر في السجل
+    .map((doc) => {
+      const lines = doc.lines ?? []
+
+      // مجموع المدين والدائن لكل جذر (المستند الواحد يكون على جذر واحد غالباً)
+      const rootTotals = new Map()
+      for (const line of lines) {
+        const root = rootOf(line.accountNumber)
+        if (!root) continue
+        const total = rootTotals.get(root) ?? { debit: 0, credit: 0 }
+        total.debit += Number(line.debit) || 0
+        total.credit += Number(line.credit) || 0
+        rootTotals.set(root, total)
+      }
+
+      return {
+        id: doc.id,
+        date: doc.date ?? '',
+        type: 'مستند صرف',
+        debitNames: lines.filter((l) => l.debit > 0).map(accountName),
+        creditNames: lines.filter((l) => l.credit > 0).map(accountName),
+        statement: doc.statement ?? '',
+        chequeNumber: doc.chequeNumber ?? '',
+        payNo: doc.number, // مستند الصرف
+        jvNo: '', // مستند القيد (لا ينطبق على مستند الصرف)
+        journalNo: doc.journalNumber ?? '', // ت اليومية
+        amount: doc.totalDebit,
+        rootTotals,
+      }
+    })
 }
 
 const SOURCES = [paymentEntries]
@@ -55,6 +91,11 @@ el.innerHTML = `
         <option value="pay-asc">حسب مستند الصرف تصاعدي</option>
         <option value="pay-desc">حسب مستند الصرف تنازلي</option>
       </select></label>
+    <label class="field"><span>إظهار التفاصيل</span>
+      <select class="g-detail">
+        <option value="all">كل التفاصيل</option>
+        <option value="many">من مذكورين</option>
+      </select></label>
     <div class="filter-actions">
       <button class="btn btn-primary g-show" type="button">عرض</button>
       <button class="btn btn-light g-clear" type="button">مسح</button>
@@ -65,27 +106,15 @@ el.innerHTML = `
 
   <div class="table-wrap">
     <table class="reg-table">
-      <thead>
-        <tr>
-          <th class="c-seq">ت</th>
-          <th class="c-date">التاريخ</th>
-          <th class="c-debit">من</th>
-          <th class="c-credit">إلى</th>
-          <th class="c-stmt">البيان</th>
-          <th class="c-cheque">رقم الصك</th>
-          <th class="c-pay">مستند الصرف</th>
-          <th class="c-jv">مستند القيد</th>
-          <th class="c-type">النوع</th>
-          <th class="c-jseq">ت اليومية</th>
-          <th class="c-amount">مبلغ المعاملة</th>
-        </tr>
-      </thead>
+      <colgroup></colgroup>
+      <thead></thead>
       <tbody></tbody>
     </table>
     <p class="empty"></p>
   </div>
 `
 
+const table = $('.reg-table', el)
 const tbody = $('tbody', el)
 const fromField = createDateField()
 const toField = createDateField()
@@ -98,35 +127,40 @@ let fiscalYear = '' // السنة المالية المعتمدة في آخر ع
 
 /* ================== أدوات ================== */
 function showError(text) {
-    const box = $('.form-error', el)
-    box.textContent = text
-    clearTimeout(errorTimer)
-    if (text) errorTimer = setTimeout(() => (box.textContent = ''), 6000)
+  const box = $('.form-error', el)
+  box.textContent = text
+  clearTimeout(errorTimer)
+  if (text) errorTimer = setTimeout(() => (box.textContent = ''), 6000)
 }
 
 function showEmpty(text) {
-    const empty = $('.empty', el)
-    empty.textContent = text ?? ''
-    empty.classList.toggle('hidden', !text)
+  const empty = $('.empty', el)
+  empty.textContent = text ?? ''
+  empty.classList.toggle('hidden', !text)
 }
 
 function cell(text, className) {
-    const td = document.createElement('td')
-    td.textContent = text ?? ''
-    if (className) td.className = className
-    return td
+  const td = document.createElement('td')
+  td.textContent = text ?? ''
+  if (className) td.className = className
+  return td
 }
 
 // خلية فيها عدة أسماء: كل اسم في سطر مستقل تحت الآخر
 function namesCell(names) {
-    const td = document.createElement('td')
-    for (const name of names) {
-        const line = document.createElement('div')
-        line.className = 'acc-line'
-        line.textContent = name
-        td.append(line)
-    }
-    return td
+  const td = document.createElement('td')
+  for (const name of names) {
+    const line = document.createElement('div')
+    line.className = 'acc-line'
+    line.textContent = name
+    td.append(line)
+  }
+  return td
+}
+
+// جهة المدين أو الدائن: كل التفاصيل، أو "مذكورين" إذا كان فيها سطران فأكثر
+function sideCell(names, detailMode, manyText) {
+  return namesCell(detailMode === 'many' && names.length > 1 ? [manyText] : names)
 }
 
 // مقارنة نصية عادية (للتواريخ بصيغة 2026-11-19)
@@ -137,125 +171,202 @@ const fmtAmount = (n) => Number(n || 0).toLocaleString('en-US', { maximumFractio
 
 /* ================== الترتيب ================== */
 function sortEntries(entries, sortKey) {
-    const [field, direction] = sortKey.split('-') // مثل date-asc أو pay-desc
-    const sign = direction === 'desc' ? -1 : 1
+  const [field, direction] = sortKey.split('-') // مثل date-asc أو pay-desc
+  const sign = direction === 'desc' ? -1 : 1
 
-    return entries.sort((a, b) => {
-        if (field === 'date') {
-            return (compareText(a.date, b.date) || a.id - b.id) * sign
-        }
+  return entries.sort((a, b) => {
+    if (field === 'date') {
+      return (compareText(a.date, b.date) || a.id - b.id) * sign
+    }
 
-        // حسب مستند الصرف: من لا يملك رقماً يبقى في الآخر في الاتجاهين
-        const pa = String(a.payNo ?? '').trim()
-        const pb = String(b.payNo ?? '').trim()
-        if (!pa && pb) return 1
-        if (pa && !pb) return -1
+    // حسب مستند الصرف: من لا يملك رقماً يبقى في الآخر في الاتجاهين
+    const pa = String(a.payNo ?? '').trim()
+    const pb = String(b.payNo ?? '').trim()
+    if (!pa && pb) return 1
+    if (pa && !pb) return -1
 
-        // عند تساوي الرقم نرتب بالتاريخ. والتنازلي عكس التصاعدي تماماً
-        return (compareNumeric(pa, pb) || compareText(a.date, b.date) || a.id - b.id) * sign
-    })
+    // عند تساوي الرقم نرتب بالتاريخ. والتنازلي عكس التصاعدي تماماً
+    return (compareNumeric(pa, pb) || compareText(a.date, b.date) || a.id - b.id) * sign
+  })
+}
+
+/* ================== رأس الجدول ================== */
+// roots = [{ root: '11', name: 'اسم الجذر' }, ...]
+// لكل جذر مجموعة أعمدة: الاسم في الأعلى، وتحته مدين ودائن
+function renderHeader(roots) {
+  // عرض الأعمدة
+  const widths = [
+    ...FIXED_COLUMNS.map((c) => c.width),
+    ...roots.flatMap(() => [ROOT_COL_WIDTH, ROOT_COL_WIDTH]),
+  ]
+  const colgroup = $('colgroup', table)
+  colgroup.replaceChildren()
+  for (const width of widths) {
+    const col = document.createElement('col')
+    col.style.width = `${width}px`
+    colgroup.append(col)
+  }
+  table.style.width = `${widths.reduce((sum, w) => sum + w, 0)}px`
+
+  // الصف الأول: الأعمدة الثابتة (تمتد على صفين) + اسم كل جذر
+  const thead = $('thead', table)
+  thead.replaceChildren()
+  const row1 = document.createElement('tr')
+  const row2 = document.createElement('tr')
+  const span = roots.length ? 2 : 1
+
+  for (const column of FIXED_COLUMNS) {
+    const th = document.createElement('th')
+    th.className = column.cls
+    th.rowSpan = span
+    th.textContent = column.label
+    row1.append(th)
+  }
+
+  for (const { root, name } of roots) {
+    const group = document.createElement('th')
+    group.className = 'root-head'
+    group.colSpan = 2
+    // الاسم ثم الرقم: الأصول غير المتداولة / 11
+    // (إذا لم يوجد حساب بهذا الرقم في الدليل يظهر الرقم وحده)
+    group.textContent = name === root ? root : `${name} / ${root}`
+    row1.append(group)
+
+    // الصف الثاني: مدين | دائن
+    for (const label of ['مدين', 'دائن']) {
+      const sub = document.createElement('th')
+      sub.textContent = label
+      row2.append(sub)
+    }
+  }
+
+  thead.append(row1)
+  if (roots.length) thead.append(row2)
 }
 
 /* ================== السجل ================== */
 function search() {
-    showError('')
-    const from = fromField.getValue()
-    const to = toField.getValue()
-    const year = toLatin($('.g-year', el).value).trim()
+  showError('')
+  const from = fromField.getValue()
+  const to = toField.getValue()
+  const year = toLatin($('.g-year', el).value).trim()
 
-    // الحقول الثلاثة إلزامية
-    if (!from) return showError('اختر تاريخ البداية (من تاريخ)')
-    if (!to) return showError('اختر تاريخ النهاية (إلى تاريخ)')
-    if (!year) return showError('أدخل السنة المالية')
-    if (!/^\d{4}$/.test(year)) return showError('السنة المالية يجب أن تكون أربعة أرقام، مثل 2022')
-    if (from > to) return showError('تاريخ البداية يجب أن يكون قبل تاريخ النهاية')
+  // الحقول الثلاثة إلزامية
+  if (!from) return showError('اختر تاريخ البداية (من تاريخ)')
+  if (!to) return showError('اختر تاريخ النهاية (إلى تاريخ)')
+  if (!year) return showError('أدخل السنة المالية')
+  if (!/^\d{4}$/.test(year)) return showError('السنة المالية يجب أن تكون أربعة أرقام، مثل 2022')
+  if (from > to) return showError('تاريخ البداية يجب أن يكون قبل تاريخ النهاية')
 
-    // أسماء الحسابات من الدليل المحاسبي الحالي (والاسم المحفوظ في المستند إن لم يوجد)
-    const accounts = new Map(loadRows(ACCOUNTS_STORE, 'all').map((r) => [r.number, r.name]))
-    const accountName = (line) =>
-        accounts.get(line.accountNumber) ?? line.accountName ?? line.accountNumber
+  // أسماء الحسابات من الدليل المحاسبي الحالي (والاسم المحفوظ في المستند إن لم يوجد)
+  const accounts = new Map(loadRows(ACCOUNTS_STORE, 'all').map((r) => [r.number, r.name]))
+  const accountName = (line) =>
+    accounts.get(line.accountNumber) ?? line.accountName ?? line.accountNumber
 
-    // السجل يعتمد على الفترة فقط. السنة المالية لا تفلتر شيئاً
-    const entries = SOURCES.flatMap((load) => load(accountName))
-        .filter((e) => e.date >= from && e.date <= to)
+  // السجل يعتمد على الفترة فقط. السنة المالية لا تفلتر شيئاً
+  const entries = SOURCES.flatMap((load) => load(accountName))
+    .filter((e) => e.date >= from && e.date <= to)
 
-    // ت: تسلسل المستندات بالترتيب الزمني، ويبقى لكل مستند مهما تغيّر الترتيب المعروض
-    entries.sort((a, b) => compareText(a.date, b.date) || a.id - b.id)
-    entries.forEach((entry, index) => (entry.seq = index + 1))
+  // ت: تسلسل المستندات بالترتيب الزمني، ويبقى لكل مستند مهما تغيّر الترتيب المعروض
+  entries.sort((a, b) => compareText(a.date, b.date) || a.id - b.id)
+  entries.forEach((entry, index) => (entry.seq = index + 1))
 
-    // ثم الترتيب الذي اختاره المستخدم
-    sortEntries(entries, $('.g-sort', el).value)
+  // ثم الترتيب الذي اختاره المستخدم
+  sortEntries(entries, $('.g-sort', el).value)
 
-    fiscalYear = year
-    searched = true
-    renderRows(entries)
+  // الجذور الموجودة في المستندات المعروضة: لكل جذر مجموعة أعمدة
+  const roots = [...new Set(entries.flatMap((e) => [...e.rootTotals.keys()]))]
+    .sort(compareText)
+    .map((root) => ({ root, name: accounts.get(root) ?? root }))
+
+  fiscalYear = year
+  searched = true
+  renderTable(entries, roots)
 }
 
-function renderRows(entries) {
-    tbody.replaceChildren()
-    $('.count', el).textContent =
-        `السنة المالية: ${fiscalYear} — عدد المستندات: ${entries.length}`
-    showEmpty(entries.length ? '' : 'لا توجد مستندات في هذه الفترة')
+function renderTable(entries, roots) {
+  const detailMode = $('.g-detail', el).value
 
-    for (const entry of entries) {
-        const tr = document.createElement('tr')
-        tr.append(
-            cell(entry.seq),
-            cell(formatDate(entry.date)),
-            namesCell(entry.debitNames),
-            namesCell(entry.creditNames),
-            cell(entry.statement, 'c-stmt'),
-            cell(entry.chequeNumber),
-            cell(entry.payNo),
-            cell(entry.jvNo),
-            cell(entry.type),
-            cell(entry.journalNo),
-            cell(fmtAmount(entry.amount))
-        )
-        tbody.append(tr)
+  renderHeader(roots)
+  tbody.replaceChildren()
+  $('.count', el).textContent =
+    `السنة المالية: ${fiscalYear} — عدد المستندات: ${entries.length}`
+  showEmpty(entries.length ? '' : 'لا توجد مستندات في هذه الفترة')
+
+  for (const entry of entries) {
+    const tr = document.createElement('tr')
+    tr.append(
+      cell(entry.seq),
+      cell(formatDate(entry.date)),
+      sideCell(entry.debitNames, detailMode, MANY_DEBIT),
+      sideCell(entry.creditNames, detailMode, MANY_CREDIT),
+      cell(entry.statement, 'c-stmt'),
+      cell(entry.chequeNumber),
+      cell(entry.payNo),
+      cell(entry.jvNo),
+      cell(entry.type),
+      cell(entry.journalNo),
+      cell(fmtAmount(entry.amount))
+    )
+
+    // أعمدة الجذور: مجموع المدين ومجموع الدائن تحت جذر المستند
+    for (const { root } of roots) {
+      const total = entry.rootTotals.get(root)
+      tr.append(
+        cell(total?.debit ? fmtAmount(total.debit) : ''),
+        cell(total?.credit ? fmtAmount(total.credit) : '')
+      )
     }
+
+    tbody.append(tr)
+  }
 }
 
 function clearFilters() {
-    $('.g-year', el).value = ''
-    $('.g-sort', el).value = 'date-asc'
-    fromField.setValue('')
-    toField.setValue('')
-    showError('')
-    fiscalYear = ''
-    searched = false
-    tbody.replaceChildren()
-    $('.count', el).textContent = ''
-    showEmpty('اختر الفترة وأدخل السنة المالية ثم اضغط «عرض»')
+  $('.g-year', el).value = ''
+  $('.g-sort', el).value = 'date-asc'
+  $('.g-detail', el).value = 'all'
+  fromField.setValue('')
+  toField.setValue('')
+  showError('')
+  fiscalYear = ''
+  searched = false
+  renderHeader([])
+  tbody.replaceChildren()
+  $('.count', el).textContent = ''
+  showEmpty('اختر الفترة وأدخل السنة المالية ثم اضغط «عرض»')
 }
 
 /* ================== الأحداث ================== */
 $('.g-show', el).addEventListener('click', search)
 $('.g-clear', el).addEventListener('click', clearFilters)
 $('.g-year', el).addEventListener('input', (e) => {
-    e.target.value = toLatin(e.target.value).replace(/\D/g, '')
+  e.target.value = toLatin(e.target.value).replace(/\D/g, '')
 })
 $('.g-year', el).addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') search()
+  if (e.key === 'Enter') search()
 })
 
-// تغيير الترتيب بعد عرض السجل يعيد ترتيبه فوراً
+// تغيير الترتيب أو إظهار التفاصيل بعد عرض السجل يحدّثه فوراً
 $('.g-sort', el).addEventListener('change', () => {
-    if (searched) search()
+  if (searched) search()
+})
+$('.g-detail', el).addEventListener('change', () => {
+  if (searched) search()
 })
 
 /* ================== واجهة الصفحة ================== */
 function render() {
-    $('.dept-badge', el).textContent = DEPARTMENTS[state.dept]
-    if (searched) search() // تحديث النتائج (بعد تغيير قسم أو تعديل مستند)
+  $('.dept-badge', el).textContent = DEPARTMENTS[state.dept]
+  if (searched) search() // تحديث النتائج (بعد تغيير قسم أو تعديل مستند)
 }
 
 clearFilters()
 
 export default {
-    id: 'page-general-journal',
-    el,
-    render,
-    reset: clearFilters,
-    getFiscalYear: () => fiscalYear, // سنستعملها عند بناء الطباعة
+  id: 'page-general-journal',
+  el,
+  render,
+  reset: clearFilters,
+  getFiscalYear: () => fiscalYear, // سنستعملها عند بناء الطباعة
 }
