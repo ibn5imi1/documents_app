@@ -23,7 +23,7 @@ const PAGES = [
 
 // ===== مؤقت للتجربة، لاحقاً يُستبدل بقاعدة البيانات =====
 // name = اسم المحاسب الذي يظهر مسبقاً في مستند الصرف
-const USERS = [{ username: 'admin', password: '1234', name: 'المدير' }]
+const USERS = [{ username: 'admin', password: '1234', name: '' }]
 
 const pageMap = {}
 let currentPageId = 'page-home'
