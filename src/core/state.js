@@ -4,6 +4,7 @@ export const DEPARTMENTS = {
     mechanical: 'الميكانيك',
     anesthesia: 'التخدير',
     xray: 'الاشعة',
+    dentalTechnology: 'صناعة الاسنان',
 }
 
 // العملات: لإضافة عملة جديدة يكفي إضافتها هنا
