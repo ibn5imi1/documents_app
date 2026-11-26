@@ -3,6 +3,7 @@ import { loadRows, loadVisible } from '../../core/storage.js'
 import { $, toLatin } from '../../core/utils.js'
 import { formatDate } from '../../core/dates.js'
 import { createDateField } from '../../core/datePicker.js'
+import { createLoader, createRowRenderer } from '../../core/loader.js'
 import { STORE_KEY as PAYMENT_STORE } from '../documents/payment.js'
 
 const ACCOUNTS_STORE = 'accounts' // الدليل المحاسبي (مشترك لكل الأقسام)
@@ -39,7 +40,7 @@ function paymentEntries(accountName) {
     .map((doc) => {
       const lines = doc.lines ?? []
 
-      // مجموع المدين والدائن لكل جذر (المستند الواحد يكون على جذر واحد غالباً)
+      // مجموع المدين والدائن لكل جذر (كل سطر يُحسب تحت جذره حتى لو تعددت الجذور في المستند)
       const rootTotals = new Map()
       for (const line of lines) {
         const root = rootOf(line.accountNumber)
@@ -94,7 +95,7 @@ el.innerHTML = `
     <label class="field"><span>إظهار التفاصيل</span>
       <select class="g-detail">
         <option value="all">كل التفاصيل</option>
-        <option value="many">من / الى مذكورين</option>
+        <option value="many">من مذكورين</option>
       </select></label>
     <div class="filter-actions">
       <button class="btn btn-primary g-show" type="button">عرض</button>
@@ -120,6 +121,10 @@ const fromField = createDateField()
 const toField = createDateField()
 $('.host-from', el).appendChild(fromField.el)
 $('.host-to', el).appendChild(toField.el)
+
+// لودر عند كثرة المستندات
+const loader = createLoader($('.table-wrap', el))
+const drawRows = createRowRenderer({ tbody, loader })
 
 let searched = false
 let errorTimer = null
@@ -192,7 +197,7 @@ function sortEntries(entries, sortKey) {
 
 /* ================== رأس الجدول ================== */
 // roots = [{ root: '11', name: 'اسم الجذر' }, ...]
-// لكل جذر مجموعة أعمدة: الاسم في الأعلى، وتحته مدين ودائن
+// لكل جذر مجموعة أعمدة: الاسم / الرقم في الأعلى، وتحته مدين ودائن
 function renderHeader(roots) {
   // عرض الأعمدة
   const widths = [
@@ -284,42 +289,44 @@ function search() {
   renderTable(entries, roots)
 }
 
+function buildRow(entry, roots, detailMode) {
+  const tr = document.createElement('tr')
+  tr.append(
+    cell(entry.seq),
+    cell(formatDate(entry.date)),
+    sideCell(entry.debitNames, detailMode, MANY_DEBIT),
+    sideCell(entry.creditNames, detailMode, MANY_CREDIT),
+    cell(entry.statement, 'c-stmt'),
+    cell(entry.chequeNumber),
+    cell(entry.payNo),
+    cell(entry.jvNo),
+    cell(entry.type),
+    cell(entry.journalNo),
+    cell(fmtAmount(entry.amount))
+  )
+
+  // أعمدة الجذور: مجموع المدين ومجموع الدائن تحت جذر المستند
+  for (const { root } of roots) {
+    const total = entry.rootTotals.get(root)
+    tr.append(
+      cell(total?.debit ? fmtAmount(total.debit) : ''),
+      cell(total?.credit ? fmtAmount(total.credit) : '')
+    )
+  }
+
+  return tr
+}
+
 function renderTable(entries, roots) {
   const detailMode = $('.g-detail', el).value
 
   renderHeader(roots)
-  tbody.replaceChildren()
   $('.count', el).textContent =
     `السنة المالية: ${fiscalYear} — عدد المستندات: ${entries.length}`
   showEmpty(entries.length ? '' : 'لا توجد مستندات في هذه الفترة')
 
-  for (const entry of entries) {
-    const tr = document.createElement('tr')
-    tr.append(
-      cell(entry.seq),
-      cell(formatDate(entry.date)),
-      sideCell(entry.debitNames, detailMode, MANY_DEBIT),
-      sideCell(entry.creditNames, detailMode, MANY_CREDIT),
-      cell(entry.statement, 'c-stmt'),
-      cell(entry.chequeNumber),
-      cell(entry.payNo),
-      cell(entry.jvNo),
-      cell(entry.type),
-      cell(entry.journalNo),
-      cell(fmtAmount(entry.amount))
-    )
-
-    // أعمدة الجذور: مجموع المدين ومجموع الدائن تحت جذر المستند
-    for (const { root } of roots) {
-      const total = entry.rootTotals.get(root)
-      tr.append(
-        cell(total?.debit ? fmtAmount(total.debit) : ''),
-        cell(total?.credit ? fmtAmount(total.credit) : '')
-      )
-    }
-
-    tbody.append(tr)
-  }
+  // الرسم على دفعات مع لودر إذا كانت المستندات كثيرة
+  drawRows(entries, (entry) => buildRow(entry, roots, detailMode))
 }
 
 function clearFilters() {
@@ -332,7 +339,7 @@ function clearFilters() {
   fiscalYear = ''
   searched = false
   renderHeader([])
-  tbody.replaceChildren()
+  drawRows([], () => null)
   $('.count', el).textContent = ''
   showEmpty('اختر الفترة وأدخل السنة المالية ثم اضغط «عرض»')
 }

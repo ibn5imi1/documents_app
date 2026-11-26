@@ -7,5 +7,6 @@ export default createTablePage({
     numLabel: 'رقم المركز',
     nameLabel: 'اسم المركز',
     addLabel: 'إضافة مركز',
+    itemLabel: 'المركز',
     global: false, // لكل قسم سجلاته
 })

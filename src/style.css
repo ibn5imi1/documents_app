@@ -316,17 +316,20 @@ thead th {
   z-index: 1;
   width: auto;
 }
+
 /* عمود رقم الحساب أعرض */
 th:nth-child(2),
 td:nth-child(2) {
   width: 180px;
   white-space: nowrap;
 }
+
 .count {
   margin-bottom: 8px;
   color: #6b7785;
   font-size: 14px;
 }
+
 /* ===== اسم المبرمج في صندوق الدخول ===== */
 .login-credit {
   margin-top: 6px;
@@ -404,6 +407,7 @@ body.is-home {
   line-height: 1.7;
   margin-bottom: 10px;
 }
+
 /* حقل الاسم: حجم ثابت، النص ينزل تلقائياً، وسكرول عند الزيادة */
 textarea {
   width: 100%;
@@ -899,7 +903,7 @@ input.date-input {
   line-height: 1.6;
 }
 
-.acc-line + .acc-line {
+.acc-line+.acc-line {
   margin-top: 5px;
   padding-top: 5px;
   border-top: 1px dashed var(--border);
@@ -912,10 +916,117 @@ input.date-input {
 
 /* ===== رأس الجدول بصفين (أعمدة الجذور) ===== */
 /* الرأس كله يثبت أعلى الجدول عند التمرير، بدل تثبيت كل خلية لوحدها */
-.reg-table thead th { position: static; }
-.reg-table thead { position: sticky; top: 0; z-index: 2; }
-.reg-table th.root-head { background: #dce8f5; }
+.reg-table thead th {
+  position: static;
+}
 
+.reg-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.reg-table th.root-head {
+  background: #dce8f5;
+}
+
+/* ===== رقم المستند التلقائي ===== */
+.f-number {
+  font-weight: 700;
+  text-align: center;
+}
+
+.opening-badge {
+  color: #8a5a00;
+  font-style: normal;
+  font-weight: 700;
+}
+
+/* ===== مؤشر التحميل ===== */
+.loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  margin-bottom: 10px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.spinner {
+  width: 22px;
+  height: 22px;
+  border: 3px solid #cfd9e6;
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ===== الرسائل المنبثقة أسفل الشاشة ===== */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  z-index: 10000;
+  pointer-events: none;
+}
+
+.toast {
+  min-width: 260px;
+  max-width: 90vw;
+  padding: 12px 22px;
+  border-radius: 10px;
+  color: #fff;
+  font-weight: 600;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  animation: toast-in 0.25s ease;
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.toast-success {
+  background: #1e8449;
+}
+
+.toast-edit {
+  background: #1f4e79;
+}
+
+.toast-delete {
+  background: #c0392b;
+}
+
+.toast.leaving {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 
 @media print {
   .print-spacer {
@@ -938,6 +1049,7 @@ input.date-input {
     margin-top: 12mm;
   }
 }
+
 @media print {
   .home-credit {
     display: none;
@@ -980,6 +1092,7 @@ input.date-input {
   thead th {
     background: #eee !important;
   }
+
   .table-wrap {
     max-height: none;
     overflow: visible;

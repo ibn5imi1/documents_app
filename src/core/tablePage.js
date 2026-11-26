@@ -2,6 +2,8 @@ import { state, DEPARTMENTS } from './state.js'
 import { scopeOf, loadRows, saveRows, loadVisible } from './storage.js'
 import { seedIfEmpty } from './seed.js'
 import { $, normalize, compareNumbers } from './utils.js'
+import { createLoader, createRowRenderer } from './loader.js'
+import { showToast } from './toast.js'
 
 /* ===== نافذة الإضافة والتعديل (واحدة مشتركة لكل الصفحات) ===== */
 const dialog = $('#entry-dialog')
@@ -63,6 +65,12 @@ entryForm.addEventListener('submit', (e) => {
     saveRows(cfg.storeKey, scope, rows)
     dialog.close()
     page.render()
+
+    const label = cfg.itemLabel ?? 'السجل'
+    showToast(
+        rowId ? `تم تعديل ${label} رقم ${number}` : `تمت إضافة ${label} رقم ${number}`,
+        rowId ? 'edit' : 'success'
+    )
 })
 
 $('#btn-cancel').addEventListener('click', () => dialog.close())
@@ -95,6 +103,7 @@ $('#btn-confirm-delete').addEventListener('click', () => {
 
     confirmDialog.close()
     page.render()
+    showToast(`تم حذف ${cfg.itemLabel ?? 'السجل'} رقم ${row.number}`, 'delete')
 })
 
 $('#btn-confirm-cancel').addEventListener('click', () => confirmDialog.close())
@@ -156,6 +165,29 @@ export function createTablePage(cfg) {
 
     const page = { id: cfg.id, cfg, el, render }
 
+    // لودر للجداول الكبيرة (مثل الدليل المحاسبي)
+    const tbody = $('tbody', el)
+    const loader = createLoader($('.table-wrap', el))
+    const drawRows = createRowRenderer({ tbody, loader, threshold: 300 })
+
+    function buildRow(row, index) {
+        const tr = document.createElement('tr')
+        tr.append(makeCell(index + 1), makeCell(row.number), makeCell(row.name))
+
+        const actionsCell = document.createElement('td')
+        actionsCell.className = 'no-print'
+        const actions = document.createElement('div')
+        actions.className = 'actions'
+        actions.append(
+            makeButton('تعديل', '', () => openDialog(page, row)),
+            makeButton('حذف', 'btn-danger', () => askDelete(page, row))
+        )
+        actionsCell.append(actions)
+
+        tr.append(actionsCell)
+        return tr
+    }
+
     function render() {
         const term = normalize($('.search', el).value.trim())
 
@@ -181,28 +213,8 @@ export function createTablePage(cfg) {
             ? `النتائج: ${rows.length} من ${all.length}`
             : `عدد السجلات: ${all.length}`
 
-        const tbody = $('tbody', el)
-        tbody.replaceChildren()
-
-        rows.forEach((row, index) => {
-            const tr = document.createElement('tr')
-            tr.append(makeCell(index + 1), makeCell(row.number), makeCell(row.name))
-
-            const actionsCell = document.createElement('td')
-            actionsCell.className = 'no-print'
-            const actions = document.createElement('div')
-            actions.className = 'actions'
-            actions.append(
-                makeButton('تعديل', '', () => openDialog(page, row)),
-                makeButton('حذف', 'btn-danger', () => askDelete(page, row))
-            )
-            actionsCell.append(actions)
-
-            tr.append(actionsCell)
-            tbody.append(tr)
-        })
-
         $('.empty', el).classList.toggle('hidden', rows.length > 0)
+        drawRows(rows, buildRow)
     }
 
     $('.search', el).addEventListener('input', render)

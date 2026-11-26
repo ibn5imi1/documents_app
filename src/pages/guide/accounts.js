@@ -8,6 +8,7 @@ export default createTablePage({
     numLabel: 'رقم الحساب',
     nameLabel: 'اسم الحساب',
     addLabel: 'إضافة حساب',
+    itemLabel: 'الحساب',
     global: true, // مشترك بين كل الأقسام
     seed,
 })
