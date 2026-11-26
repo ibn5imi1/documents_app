@@ -10,7 +10,8 @@ import { showToast } from '../../core/toast.js'
 export const STORE_KEY = 'payment-vouchers' // المستندات تُحفظ لكل قسم على حدة
 const ACCOUNTS_STORE = 'accounts' // الدليل المحاسبي (مشترك لكل الأقسام)
 
-// ترقيم المستندات: متسلسل من 1، ولا يعيد استعمال أرقام المستندات المحذوفة
+// الترقيم يقترح الرقم التالي (آخر رقم صُرف + 1)، والمستخدم يستطيع تغييره.
+// الأرقام المحذوفة لا تُقترح مرة ثانية، لكن يمكنه كتابتها يدوياً.
 export const numbering = createNumbering({
   docsStore: STORE_KEY,
   counterStore: 'payment-counter',
@@ -36,8 +37,9 @@ el.innerHTML = `
   </div>
 
   <div class="voucher-form">
-    <label class="field"><span>رقم المستند <em class="opening-badge hidden">(المستند الافتتاحي)</em></span>
-      <input class="f-number" type="text" readonly /></label>
+    <label class="field"><span>رقم المستند <em class="req">*</em>
+        <em class="opening-badge hidden">(المستند الافتتاحي)</em></span>
+      <input class="f-number" type="text" inputmode="numeric" autocomplete="off" /></label>
     <div class="field"><span>تاريخ المستند <em class="req">*</em></span>
       <div class="host-date"></div></div>
     <label class="field span-2"><span>المستفيد</span>
@@ -99,6 +101,7 @@ let accountMap = new Map() // رقم الدليل -> اسم الدليل
 let formDept = null
 let editingId = null // null = مستند جديد
 let editingScope = null // القسم الذي حُفظ فيه المستند الجاري تعديله
+let numberTouched = false // هل غيّر المستخدم رقم المستند بيده؟
 let messageTimer = null
 
 // حقلا التاريخ (تقويم عربي)
@@ -115,11 +118,26 @@ for (const currency of CURRENCIES) {
   $('.f-currency', el).appendChild(option)
 }
 
-// رقم المستند: للقراءة فقط، والرقم 1 هو المستند الافتتاحي
-function setNumber(value) {
-  $('.f-number', el).value = value
-  $('.opening-badge', el).classList.toggle('hidden', String(value) !== '1')
+/* ================== رقم المستند ================== */
+const numberInput = $('.f-number', el)
+
+// الرقم 1 هو المستند الافتتاحي
+function updateOpeningBadge() {
+  const value = parseInt(numberInput.value, 10)
+  $('.opening-badge', el).classList.toggle('hidden', value !== 1)
 }
+
+function setNumber(value) {
+  numberInput.value = value
+  updateOpeningBadge()
+}
+
+// أرقام فقط (الأرقام العربية تتحول إلى لاتينية)
+numberInput.addEventListener('input', () => {
+  numberTouched = true
+  numberInput.value = toLatin(numberInput.value).replace(/\D/g, '')
+  updateOpeningBadge()
+})
 
 /* ================== الدليل المحاسبي ================== */
 function refreshAccounts() {
@@ -264,6 +282,7 @@ function setEditMode(doc) {
 function resetForm() {
   editingId = null
   editingScope = null
+  numberTouched = false
   setEditMode(null)
 
   for (const cls of [
@@ -272,7 +291,7 @@ function resetForm() {
   ]) {
     $(cls, el).value = ''
   }
-  setNumber(numbering.next(state.dept)) // الرقم التالي في التسلسل
+  setNumber(numbering.next(state.dept)) // الرقم المقترح، ويمكن تعديله
   docDate.setValue(todayISO())
   chequeDate.setValue('')
   $('.f-currency', el).value = CURRENCIES[0]
@@ -295,7 +314,7 @@ function loadForEdit(doc) {
   formDept = state.dept
   setEditMode(doc)
 
-  setNumber(doc.number) // رقم المستند لا يتغير عند التعديل
+  setNumber(doc.number)
   docDate.setValue(doc.date)
   $('.f-beneficiary', el).value = doc.beneficiary ?? ''
   $('.f-cheque-number', el).value = doc.chequeNumber ?? ''
@@ -325,21 +344,33 @@ function save() {
   const date = docDate.getValue()
   const cancelled = $('.f-cancelled', el).checked
 
-  // الحقل الإلزامي الوحيد: تاريخ المستند (والرقم تلقائي)
+  // رقم المستند: إلزامي، أرقام فقط، وأكبر من صفر
+  const rawNumber = toLatin(numberInput.value).replace(/\D/g, '')
+  if (!rawNumber) {
+    numberInput.focus()
+    return message('error', 'أدخل رقم المستند (أرقام فقط)')
+  }
+  const n = parseInt(rawNumber, 10)
+  if (!Number.isSafeInteger(n) || n < 1) {
+    numberInput.focus()
+    return message('error', 'رقم المستند يجب أن يكون رقماً أكبر من صفر')
+  }
+  const number = String(n) // 007 تصبح 7
+
   if (!date) return message('error', 'اختر تاريخ المستند')
 
   // المستند الجديد يُحفظ في القسم المختار حالياً (وإذا كان "الكل" يظهر في كل الأقسام)
   // والمستند المعدَّل يبقى في قسمه الأصلي
   const scope = isNew ? state.dept : editingScope
-
-  // المستند الجديد يأخذ الرقم التالي لحظة الحفظ (حتى لا يتكرر إذا حُفظ مستند من مكان آخر)
-  const number = isNew ? String(numbering.next(scope)) : $('.f-number', el).value.trim()
-
   const docs = loadRows(STORE_KEY, scope)
 
   // رقم المستند لا يتكرر بين المستندات التي تظهر معاً في هذا القسم
-  if (loadVisible(STORE_KEY, scope).some((d) => d.number === number && d.id !== editingId)) {
-    return message('error', 'رقم المستند موجود مسبقاً في هذا القسم')
+  const duplicate = loadVisible(STORE_KEY, scope).some(
+    (d) => d.id !== editingId && (d.number === number || parseInt(d.number, 10) === n)
+  )
+  if (duplicate) {
+    numberInput.focus()
+    return message('error', `رقم المستند ${number} موجود مسبقاً، اكتب رقماً آخر`)
   }
 
   // ===== قراءة أسطر الجدول =====
@@ -363,11 +394,11 @@ function save() {
 
     // المستند البطال لا يُفحص جدوله
     if (!cancelled) {
-      const n = index + 1
-      if (!accNumber) return message('error', `السطر ${n}: أدخل رقم الدليل`)
-      if (!accName) return message('error', `السطر ${n}: رقم الدليل غير موجود في الدليل المحاسبي`)
-      if (d && c) return message('error', `السطر ${n}: لا يمكن إدخال مدين ودائن في نفس السطر`)
-      if (!d && !c) return message('error', `السطر ${n}: أدخل مبلغ المدين أو الدائن`)
+      const row = index + 1
+      if (!accNumber) return message('error', `السطر ${row}: أدخل رقم الدليل`)
+      if (!accName) return message('error', `السطر ${row}: رقم الدليل غير موجود في الدليل المحاسبي`)
+      if (d && c) return message('error', `السطر ${row}: لا يمكن إدخال مدين ودائن في نفس السطر`)
+      if (!d && !c) return message('error', `السطر ${row}: أدخل مبلغ المدين أو الدائن`)
     }
 
     debit += d
@@ -417,6 +448,7 @@ function save() {
     if (index === -1) return message('error', 'هذا المستند لم يعد موجوداً')
     docs[index] = { ...docs[index], ...data, updatedAt: new Date().toISOString() }
     saveRows(STORE_KEY, scope, docs)
+    numbering.reserve(scope, number) // إذا كتب رقماً أكبر من آخر رقم، يستمر الاقتراح بعده
     resetForm()
     navigate('page-payment-report') // الرجوع إلى الكشف
     showToast(`تم تعديل مستند الصرف رقم ${number}`, 'edit')
@@ -426,7 +458,7 @@ function save() {
   // مستند جديد
   docs.push({ id: Date.now(), ...data, createdAt: new Date().toISOString() })
   saveRows(STORE_KEY, scope, docs)
-  numbering.reserve(scope, number) // الرقم صُرف ولن يُستعمل مرة ثانية
+  numbering.reserve(scope, number) // الرقم الأقل من آخر رقم لا يغيّر الاقتراح، والأكبر يرفعه
   resetForm()
   showToast(
     number === '1' ? 'تم حفظ المستند الافتتاحي (رقم 1)' : `تم حفظ مستند الصرف رقم ${number}`,
@@ -452,8 +484,8 @@ function render() {
   if (formDept !== null && formDept !== state.dept) resetForm()
   formDept = state.dept
 
-  // المستند الجديد: نحدّث الرقم (قد يكون حُفظ مستند من نافذة أخرى)
-  if (editingId === null) setNumber(numbering.next(state.dept))
+  // نحدّث الرقم المقترح فقط إذا لم يكتب المستخدم رقماً بيده
+  if (editingId === null && !numberTouched) setNumber(numbering.next(state.dept))
 
   tbody.querySelectorAll('tr').forEach(updateName)
 }

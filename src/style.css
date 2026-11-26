@@ -1028,6 +1028,159 @@ input.date-input {
   }
 }
 
+/* ===== التاريخ المعطّل (يُتجاهل عند الكشف برقم) ===== */
+.field.ignored>span {
+  color: #9aa4b0;
+}
+
+.field.ignored .req {
+  visibility: hidden;
+}
+
+.date-field.disabled {
+  opacity: 0.6;
+}
+
+.date-field.disabled input.date-input {
+  background: #e4e8ee;
+  color: #8a94a0;
+  cursor: not-allowed;
+}
+
+.filter-hint {
+  color: #6b7785;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+/* ===== اختيار الحساب (قائمة الاقتراحات) ===== */
+.account-picker {
+  position: relative;
+}
+
+.ap-list {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
+  margin-top: 4px;
+  max-height: 280px;
+  overflow-y: auto;
+  list-style: none;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  z-index: 40;
+}
+
+.ap-list li {
+  padding: 9px 12px;
+  cursor: pointer;
+  line-height: 1.5;
+}
+
+.ap-list li:hover,
+.ap-list li.active {
+  background: #eaf0f7;
+}
+
+.ap-list li b {
+  color: var(--primary);
+}
+
+.account-picker.selected input {
+  border-color: #1e8449;
+}
+
+/* ===== سجل الأستاذ العام ===== */
+.filter-box.ledger-filter {
+  grid-template-columns: 2.4fr 1fr 1fr auto;
+}
+
+.start-hint {
+  color: #6b7785;
+  padding: 14px 0;
+}
+
+.ledger-info {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+
+.ledger-info span {
+  display: block;
+  font-size: 13px;
+  color: #6b7785;
+  margin-bottom: 4px;
+}
+
+.ledger-info strong {
+  font-size: 16px;
+}
+
+.ledger-table th.c-debit,
+.ledger-table th.c-credit {
+  width: 150px;
+}
+
+.ledger-table th.c-docno {
+  width: 110px;
+}
+
+.ledger-table th.c-date {
+  width: 115px;
+}
+
+.ledger-table th.c-type {
+  width: 120px;
+}
+
+.ledger-table th.c-details {
+  width: auto;
+}
+
+.ledger-table td.c-details {
+  text-align: right;
+  white-space: pre-line;
+  line-height: 1.6;
+}
+
+.ledger-table tfoot td {
+  font-weight: 700;
+  background: #eaf0f7;
+}
+
+.ledger-summary {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ledger-summary .sum-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ledger-summary .sum-row.total {
+  border-top: 2px solid var(--primary);
+  padding-top: 10px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
 @media print {
   .print-spacer {
     display: table-row;

@@ -33,10 +33,11 @@ const rootOf = (accNumber) => String(accNumber ?? '').slice(0, 2)
 
 /* ================== مصادر السجل ================== */
 // كل نوع مستند له دالة تحوّل مستنداته إلى أسطر السجل.
+// cancelled = false: المستندات العادية، true: المستندات البطالة فقط
 // لاحقاً نضيف هنا: مستند القيد ووصل القبض.
-function paymentEntries(accountName) {
+function paymentEntries(accountName, cancelled) {
   return loadVisible(PAYMENT_STORE, state.dept)
-    .filter((doc) => !doc.cancelled) // المستند البطال لا يظهر في السجل
+    .filter((doc) => Boolean(doc.cancelled) === cancelled)
     .map((doc) => {
       const lines = doc.lines ?? []
 
@@ -54,7 +55,7 @@ function paymentEntries(accountName) {
       return {
         id: doc.id,
         date: doc.date ?? '',
-        type: 'مستند صرف',
+        type: cancelled ? 'مستند صرف بطال' : 'مستند صرف',
         debitNames: lines.filter((l) => l.debit > 0).map(accountName),
         creditNames: lines.filter((l) => l.credit > 0).map(accountName),
         statement: doc.statement ?? '',
@@ -76,6 +77,11 @@ el.id = 'page-general-journal'
 el.className = 'page hidden'
 el.innerHTML = `
   <h2 class="page-title">سجل اليومية العامة <span class="dept-badge"></span></h2>
+
+  <div class="mode-tabs">
+    <button type="button" class="tab active" data-mode="normal">المستندات</button>
+    <button type="button" class="tab" data-mode="cancelled">المستندات البطالة</button>
+  </div>
 
   <div class="filter-box journal-filter">
     <div class="field"><span>من تاريخ <em class="req">*</em></span>
@@ -126,6 +132,7 @@ $('.host-to', el).appendChild(toField.el)
 const loader = createLoader($('.table-wrap', el))
 const drawRows = createRowRenderer({ tbody, loader })
 
+let mode = 'normal' // normal | cancelled
 let searched = false
 let errorTimer = null
 let fiscalYear = '' // السنة المالية المعتمدة في آخر عرض (للطباعة لاحقاً)
@@ -266,10 +273,11 @@ function search() {
   // أسماء الحسابات من الدليل المحاسبي الحالي (والاسم المحفوظ في المستند إن لم يوجد)
   const accounts = new Map(loadRows(ACCOUNTS_STORE, 'all').map((r) => [r.number, r.name]))
   const accountName = (line) =>
-    accounts.get(line.accountNumber) ?? line.accountName ?? line.accountNumber
+    accounts.get(line.accountNumber) ?? (line.accountName || line.accountNumber || 'بدون حساب')
 
   // السجل يعتمد على الفترة فقط. السنة المالية لا تفلتر شيئاً
-  const entries = SOURCES.flatMap((load) => load(accountName))
+  const cancelled = mode === 'cancelled'
+  const entries = SOURCES.flatMap((load) => load(accountName, cancelled))
     .filter((e) => e.date >= from && e.date <= to)
 
   // ت: تسلسل المستندات بالترتيب الزمني، ويبقى لكل مستند مهما تغيّر الترتيب المعروض
@@ -319,10 +327,11 @@ function buildRow(entry, roots, detailMode) {
 
 function renderTable(entries, roots) {
   const detailMode = $('.g-detail', el).value
+  const kind = mode === 'cancelled' ? 'المستندات البطالة — ' : ''
 
   renderHeader(roots)
   $('.count', el).textContent =
-    `السنة المالية: ${fiscalYear} — عدد المستندات: ${entries.length}`
+    `${kind}السنة المالية: ${fiscalYear} — عدد المستندات: ${entries.length}`
   showEmpty(entries.length ? '' : 'لا توجد مستندات في هذه الفترة')
 
   // الرسم على دفعات مع لودر إذا كانت المستندات كثيرة
@@ -362,18 +371,33 @@ $('.g-detail', el).addEventListener('change', () => {
   if (searched) search()
 })
 
+// التبويبان: سجل المستندات العادية، أو سجل المستندات البطالة
+el.querySelectorAll('.tab').forEach((tab) => {
+  tab.addEventListener('click', () => {
+    mode = tab.dataset.mode
+    el.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t === tab))
+    if (searched) search()
+  })
+})
+
 /* ================== واجهة الصفحة ================== */
 function render() {
   $('.dept-badge', el).textContent = DEPARTMENTS[state.dept]
   if (searched) search() // تحديث النتائج (بعد تغيير قسم أو تعديل مستند)
 }
 
-clearFilters()
+function reset() {
+  mode = 'normal'
+  el.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t.dataset.mode === 'normal'))
+  clearFilters()
+}
+
+reset()
 
 export default {
   id: 'page-general-journal',
   el,
   render,
-  reset: clearFilters,
+  reset,
   getFiscalYear: () => fiscalYear, // سنستعملها عند بناء الطباعة
 }

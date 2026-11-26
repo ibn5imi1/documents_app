@@ -4,8 +4,9 @@ import { $, toLatin } from '../../core/utils.js'
 import { formatDate } from '../../core/dates.js'
 import { createDateField } from '../../core/datePicker.js'
 import { navigate } from '../../core/nav.js'
-import { confirmDelete } from '../../core/confirm.js'
-import payment, { STORE_KEY } from '../documents/payment.js'
+import { createLoader, createRowRenderer } from '../../core/loader.js'
+import { showToast } from '../../core/toast.js'
+import payment, { STORE_KEY, numbering } from '../documents/payment.js'
 
 const SEARCH_FIELDS = { number: 'number', cheque: 'chequeNumber', journal: 'journalNumber' }
 
@@ -30,8 +31,10 @@ el.innerHTML = `
       </select></label>
     <label class="field"><span>القيمة</span>
       <input class="r-value" type="text" autocomplete="off" /></label>
-    <div class="field"><span>من تاريخ</span><div class="host-from"></div></div>
-    <div class="field"><span>إلى تاريخ</span><div class="host-to"></div></div>
+    <div class="field"><span>من تاريخ <em class="req">*</em></span>
+      <div class="host-from"></div></div>
+    <div class="field"><span>إلى تاريخ <em class="req">*</em></span>
+      <div class="host-to"></div></div>
     <label class="field"><span>الترتيب</span>
       <select class="r-sort">
         <option value="last">من آخر مستند إلى أول مستند</option>
@@ -47,6 +50,7 @@ el.innerHTML = `
       <button class="btn btn-light r-clear" type="button">مسح</button>
     </div>
   </div>
+  <p class="filter-hint">التاريخ (من وإلى) إلزامي. وعند كتابة قيمة في حقل «القيمة» يتم تجاهل التاريخ.</p>
   <p class="form-error error"></p>
   <p class="count"></p>
 
@@ -70,6 +74,16 @@ el.innerHTML = `
     </table>
     <p class="empty"></p>
   </div>
+
+  <!-- نافذة تأكيد الحذف (داخل الصفحة نفسها) -->
+  <dialog class="confirm-dialog">
+    <h3>تأكيد الحذف</h3>
+    <p class="delete-text"></p>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-danger btn-delete-yes">تأكيد الحذف</button>
+      <button type="button" class="btn btn-light btn-delete-no">إلغاء</button>
+    </div>
+  </dialog>
 `
 
 const tbody = $('tbody', el)
@@ -77,6 +91,10 @@ const fromField = createDateField()
 const toField = createDateField()
 $('.host-from', el).appendChild(fromField.el)
 $('.host-to', el).appendChild(toField.el)
+
+// لودر عند كثرة المستندات
+const loader = createLoader($('.table-wrap', el))
+const drawRows = createRowRenderer({ tbody, loader })
 
 let mode = 'normal' // normal | cancelled
 let searched = false
@@ -113,6 +131,16 @@ function button(label, extraClass, onClick) {
 }
 
 const fmtAmount = (n) => Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 3 })
+
+/* ================== تعطيل التاريخ ================== */
+// عند كتابة قيمة (رقم مستند/صك/يومية) يُتجاهل التاريخ: نعطّل الحقلين ونغيّر لونهما
+function setDatesDisabled(disabled) {
+  for (const field of [fromField, toField]) {
+    field.el.classList.toggle('disabled', disabled)
+    $('.date-input', field.el).disabled = disabled
+    field.el.closest('.field')?.classList.toggle('ignored', disabled)
+  }
+}
 
 /* ================== الترتيب ================== */
 // مقارنة نصية عادية (للتواريخ بصيغة 2026-11-19)
@@ -156,8 +184,11 @@ function search() {
   const from = fromField.getValue()
   const to = toField.getValue()
 
-  if (from && to && from > to) {
-    return showError('تاريخ البداية يجب أن يكون قبل تاريخ النهاية')
+  // بدون قيمة: التاريخان (من وإلى) إلزاميان
+  if (!value) {
+    if (!from) return showError('اختر تاريخ البداية (من تاريخ)')
+    if (!to) return showError('اختر تاريخ النهاية (إلى تاريخ)')
+    if (from > to) return showError('تاريخ البداية يجب أن يكون قبل تاريخ النهاية')
   }
 
   // مستندات القسم + مستندات "الكل".
@@ -167,57 +198,62 @@ function search() {
   )
 
   if (value) {
+    // الكشف برقم: يُتجاهل التاريخ
     const field = SEARCH_FIELDS[key]
     docs = docs.filter((d) => String(d[field] ?? '').trim() === value)
+  } else {
+    // الكشف بالفترة
+    docs = docs.filter((d) => d.date >= from && d.date <= to)
   }
-  if (from) docs = docs.filter((d) => d.date >= from)
-  if (to) docs = docs.filter((d) => d.date <= to)
 
   sortDocs(docs, $('.r-sort', el).value)
 
   searched = true
-  renderRows(docs)
+  renderTable(docs)
 }
 
-function renderRows(docs) {
-  tbody.replaceChildren()
+// رقم المستند، والرقم 1 هو الافتتاحي
+const numberLabel = (number) => (String(number) === '1' ? '1 (افتتاحي)' : number)
+
+function buildRow(doc, index) {
+  const tr = document.createElement('tr')
+  tr.append(
+    cell(index + 1),
+    cell(numberLabel(doc.number)),
+    cell(formatDate(doc.date)),
+    cell(doc.beneficiary),
+    cell(doc.chequeNumber),
+    cell(doc.journalNumber),
+    cell(doc.currency),
+    cell(fmtAmount(doc.totalDebit))
+  )
+
+  // البيان: سطران كحد أقصى والنص الكامل عند تمرير المؤشر
+  const stmt = document.createElement('td')
+  const clamp = document.createElement('div')
+  clamp.className = 'rpt-stmt'
+  clamp.textContent = doc.statement ?? ''
+  clamp.title = doc.statement ?? ''
+  stmt.append(clamp)
+  tr.append(stmt)
+
+  const actionsCell = document.createElement('td')
+  const actions = document.createElement('div')
+  actions.className = 'actions'
+  actions.append(
+    button('تعديل', '', () => edit(doc)),
+    button('حذف', 'btn-danger', () => askDelete(doc))
+  )
+  actionsCell.append(actions)
+  tr.append(actionsCell)
+
+  return tr
+}
+
+function renderTable(docs) {
   $('.count', el).textContent = `عدد المستندات: ${docs.length}`
   showEmpty(docs.length ? '' : 'لا توجد مستندات مطابقة')
-
-  docs.forEach((doc, index) => {
-    const tr = document.createElement('tr')
-    tr.append(
-      cell(index + 1),
-      cell(doc.number),
-      cell(formatDate(doc.date)),
-      cell(doc.beneficiary),
-      cell(doc.chequeNumber),
-      cell(doc.journalNumber),
-      cell(doc.currency),
-      cell(fmtAmount(doc.totalDebit))
-    )
-
-    // البيان: سطران كحد أقصى والنص الكامل عند تمرير المؤشر
-    const stmt = document.createElement('td')
-    const clamp = document.createElement('div')
-    clamp.className = 'rpt-stmt'
-    clamp.textContent = doc.statement ?? ''
-    clamp.title = doc.statement ?? ''
-    stmt.append(clamp)
-    tr.append(stmt)
-
-    const actionsCell = document.createElement('td')
-    const actions = document.createElement('div')
-    actions.className = 'actions'
-    actions.append(
-      button('تعديل', '', () => edit(doc)),
-      button('حذف', 'btn-danger', () => remove(doc))
-    )
-    actionsCell.append(actions)
-    tr.append(actionsCell)
-
-    tbody.append(tr)
-  })
+  drawRows(docs, buildRow)
 }
 
 function edit(doc) {
@@ -225,30 +261,83 @@ function edit(doc) {
   navigate('page-payment')
 }
 
-async function remove(doc) {
-  const ok = await confirmDelete(`هل تريد حذف مستند الصرف رقم ${doc.number}؟ لا يمكن التراجع عن الحذف.`)
-  if (!ok) return
+/* ================== الحذف ================== */
+const deleteDialog = $('.confirm-dialog', el)
+let pendingDelete = null
 
-  // الحذف من القسم الذي حُفظ فيه المستند فعلاً
-  saveRows(
-    STORE_KEY,
-    doc.scope,
-    loadRows(STORE_KEY, doc.scope).filter((d) => d.id !== doc.id)
-  )
-  search()
+// 1) الضغط على "حذف": تظهر نافذة التأكيد
+function askDelete(doc) {
+  pendingDelete = doc
+  $('.delete-text', el).textContent =
+    `هل تريد حذف مستند الصرف رقم ${doc.number}؟ لا يمكن التراجع عن الحذف.`
+  deleteDialog.showModal()
 }
 
+// يحذف المستند بالرقم التعريفي، وإن لم يجده في قسمه يبحث في بقية الأقسام
+function deleteFromStorage(doc) {
+  const scopes = new Set([doc.scope, ...Object.keys(DEPARTMENTS)].filter(Boolean))
+  for (const scope of scopes) {
+    const rows = loadRows(STORE_KEY, scope)
+    if (rows.some((d) => String(d.id) === String(doc.id))) {
+      saveRows(
+        STORE_KEY,
+        scope,
+        rows.filter((d) => String(d.id) !== String(doc.id))
+      )
+      return true
+    }
+  }
+  return false
+}
+
+// 2) الضغط على "تأكيد الحذف": نحذف ثم تظهر الرسالة الصغيرة أسفل الشاشة
+function performDelete(doc) {
+  try {
+    // نسجّل الرقم حتى لا يُقترح مرة ثانية (فشله لا يمنع الحذف)
+    try {
+      numbering.reserve(doc.scope, doc.number)
+    } catch (error) {
+      console.warn('تعذّر تسجيل الرقم المحذوف', error)
+    }
+
+    if (!deleteFromStorage(doc)) {
+      showToast(`تعذّر الحذف: المستند رقم ${doc.number} غير موجود في التخزين`, 'delete')
+    } else {
+      showToast(`تم حذف مستند الصرف رقم ${doc.number}`, 'delete')
+    }
+  } catch (error) {
+    console.error(error)
+    showToast(`تعذّر حذف المستند: ${error.message}`, 'delete')
+  }
+
+  search() // نحدّث الجدول في كل الأحوال
+}
+
+$('.btn-delete-no', el).addEventListener('click', () => {
+  pendingDelete = null
+  deleteDialog.close()
+})
+
+$('.btn-delete-yes', el).addEventListener('click', () => {
+  const doc = pendingDelete
+  pendingDelete = null
+  deleteDialog.close()
+  if (doc) performDelete(doc)
+})
+
+/* ================== مسح الفلاتر ================== */
 function clearFilters() {
   $('.r-key', el).value = 'number'
   $('.r-value', el).value = ''
   $('.r-sort', el).value = 'last'
   fromField.setValue('')
   toField.setValue('')
+  setDatesDisabled(false)
   showError('')
   searched = false
-  tbody.replaceChildren()
+  drawRows([], buildRow)
   $('.count', el).textContent = ''
-  showEmpty('اختر طريقة الكشف ثم اضغط «عرض»')
+  showEmpty('اختر الفترة (من وإلى) أو اكتب رقماً ثم اضغط «عرض»')
 }
 
 /* ================== الأحداث ================== */
@@ -256,6 +345,11 @@ $('.r-show', el).addEventListener('click', search)
 $('.r-clear', el).addEventListener('click', clearFilters)
 $('.r-value', el).addEventListener('keydown', (e) => {
   if (e.key === 'Enter') search()
+})
+
+// عند كتابة قيمة نعطّل التاريخ، وعند حذفها يعود التاريخ
+$('.r-value', el).addEventListener('input', (e) => {
+  setDatesDisabled(e.target.value.trim() !== '')
 })
 
 // تغيير الترتيب بعد عرض النتائج يعيد ترتيبها فوراً
@@ -267,7 +361,7 @@ el.querySelectorAll('.tab').forEach((tab) => {
   tab.addEventListener('click', () => {
     mode = tab.dataset.mode
     el.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t === tab))
-    search()
+    if (searched) search()
   })
 })
 

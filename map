@@ -13,6 +13,7 @@ src/
 │   ├── numbering.js         ← (الترقيم المتسلسل)
 │   ├── loader.js            ← (اللودر ورسم الجداول الكبيرة)
 │   ├── toast.js             ← (الرسائل المنبثقة)
+│   ├── accountPicker.js     ← (اختيار الحساب بالاسم أو الرقم مع القائمة)
 │   └── confirm.js           ← (نافذة تأكيد الحذف)
 └── pages/
 │    ├── documents/           ← مجلد قائمة "مستندات"
@@ -24,7 +25,8 @@ src/
 │    │   ├── journalReport.js      ← مؤقت
 │    │   └── receiptReport.js      ← مؤقت
 │    ├── registers/ مجلد التقارير
-│        ├── generalJournal.js
+│        ├── generalJournal.js سجل اليومية العامة
+│        ├── generalLedger.js سجل الأستاذ العام
 │    └── guide/               ← مجلد قائمة "الدليل"
 │       ├── accounts.js      ← الدليل المحاسبي
 │        ├── accounts.txt     ← بياناته الافتراضية
