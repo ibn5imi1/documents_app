@@ -26,6 +26,9 @@ function balanceText(signed) {
   return `${fmtMilli(Math.abs(signed))} ${signed > 0 ? "مدين" : "دائن"}`;
 }
 
+// رصيد بالقيمة فقط، بدون ذكر الجهة (مدين/دائن)
+const amountOnly = (signed) => fmtMilli(Math.abs(signed))
+
 const compareText = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 
 // القيد الافتتاحي: مستند القيد رقم 1 من نوع «قيد افتتاحي»
@@ -275,9 +278,9 @@ async function appendBlock(block, from, to, id, heavy) {
 
   $(".s-from", section).textContent = formatDate(from);
   $(".s-to", section).textContent = formatDate(to);
-  $(".s-movement", section).textContent = balanceText(block.movement);
+  $('.s-movement', section).textContent = amountOnly(block.movement);
   $(".s-opening", section).textContent = balanceText(block.opening);
-  $(".s-final", section).textContent = balanceText(block.final);
+  $('.s-final', section).textContent = amountOnly(block.final);
 
   const tbody = $("tbody", section);
   for (let start = 0; start < block.rows.length; start += ROW_CHUNK) {
