@@ -1,0 +1,26 @@
+/* ===== كشف مستندات الصرف: عرض الأعمدة ===== */
+.rpt-table th.c-docno {
+  width: 110px;
+}
+.rpt-table th.c-date {
+  width: 110px;
+}
+.rpt-table th.c-benef {
+  width: 300px;
+}
+.rpt-table th.c-cheque,
+.rpt-table th.c-journal {
+  width: 110px;
+}
+.rpt-table th.c-cur {
+  width: 70px;
+}
+.rpt-table th.c-amount {
+  width: 120px;
+}
+.rpt-table th.c-stmt {
+  width: 300px;
+}
+.rpt-table th.c-act {
+  width: 160px;
+}

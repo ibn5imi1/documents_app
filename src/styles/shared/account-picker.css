@@ -1,0 +1,50 @@
+/* ===== اختيار الحساب (قائمة الاقتراحات بشكل قوائم النافبار) ===== */
+.account-picker {
+  position: relative;
+}
+
+.ap-list {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
+  margin-top: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  list-style: none;
+  background: #fff;
+  border: none;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  z-index: 40;
+}
+
+.ap-list li {
+  padding: 12px 16px;
+  cursor: pointer;
+  line-height: 1.5;
+}
+
+.ap-list li:hover,
+.ap-list li.active {
+  background: #eaf0f7;
+}
+
+.ap-list li b {
+  color: var(--primary);
+}
+
+.account-picker.selected input {
+  border-color: #1e8449;
+}
+
+/* معطّل (عند كشف جميع الحسابات) */
+.account-picker.disabled {
+  opacity: 0.6;
+}
+
+.account-picker.disabled .ap-input {
+  background: #e4e8ee;
+  color: #8a94a0;
+  cursor: not-allowed;
+}

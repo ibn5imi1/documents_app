@@ -1,0 +1,15 @@
+/* المتغيرات المشتركة */
+:root {
+  /* الألوان */
+  --primary: #1f4e79;
+  --primary-dark: #163a5a;
+  --bg: #f3f5f8;
+  --border: #d5dbe3;
+  --text: #1c2733;
+  --danger: #c0392b;
+
+  /* شريط التمرير */
+  --scroll-track: #e3ecf6;
+  --scroll-thumb: #2a86d8;
+  --scroll-thumb-hover: #14558f;
+}

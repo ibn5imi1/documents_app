@@ -1,0 +1,36 @@
+/* ===== تسجيل الدخول ===== */
+.login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-box {
+  width: 360px;
+  background: #fff;
+  padding: 32px;
+  border-radius: 14px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.login-box h1 {
+  font-size: 22px;
+  text-align: center;
+  color: var(--primary);
+  margin-bottom: 6px;
+}
+
+/* اسم المبرمج في صندوق الدخول */
+.login-credit {
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--primary);
+}

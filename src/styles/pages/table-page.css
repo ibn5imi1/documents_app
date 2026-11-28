@@ -1,0 +1,26 @@
+/* =====================================================
+   صفحات الجداول البسيطة: الدليل المحاسبي ومراكز التكلفة
+   ===================================================== */
+.toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.toolbar .search {
+  flex: 1;
+}
+
+/* سطر القسم للطباعة */
+.print-meta {
+  display: none;
+}
+
+.print-meta:empty {
+  display: none !important;
+}
+
+/* صفوف الهوامش: مخفية على الشاشة، تظهر عند الطباعة فقط (انظر print.css) */
+.print-spacer {
+  display: none;
+}

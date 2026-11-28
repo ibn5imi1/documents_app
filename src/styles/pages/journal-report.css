@@ -1,0 +1,35 @@
+/* ===== كشف مستند قيد: جدول أعرض من الشاشة بسكرول أفقي مرتب ===== */
+.jrpt-table {
+  width: 1490px; /* مجموع عروض الأعمدة */
+}
+
+.jrpt-table td {
+  vertical-align: top;
+}
+
+.jrpt-table th.c-docno {
+  width: 100px;
+}
+.jrpt-table th.c-type {
+  width: 170px;
+}
+.jrpt-table th.c-date,
+.jrpt-table th.c-bond,
+.jrpt-table th.c-bonddate {
+  width: 110px;
+}
+.jrpt-table th.c-cur {
+  width: 80px;
+}
+.jrpt-table th.c-journal {
+  width: 100px;
+}
+.jrpt-table th.c-amount {
+  width: 130px;
+}
+.jrpt-table th.c-stmt {
+  width: 350px;
+}
+.jrpt-table th.c-act {
+  width: 160px;
+}

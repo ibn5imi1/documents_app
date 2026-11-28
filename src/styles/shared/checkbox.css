@@ -1,0 +1,118 @@
+/* =====================================================
+   مربعات الاختيار (Checkbox): شكل جديد + حركة عند الضغط
+   تشمل كل input من نوع checkbox تلقائياً
+   ===================================================== */
+input[type="checkbox"] {
+  --cb-border: #9db2c9;
+
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  margin: 0;
+  border: 2px solid var(--cb-border);
+  border-radius: 7px;
+  background: #fff;
+  box-shadow: none;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s,
+    transform 0.15s;
+}
+
+/* علامة الصح: تُرسم من اليسار لليمين عند التحديد */
+input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    center / 80% no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    center / 80% no-repeat;
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 0.25s ease 0.05s;
+}
+
+/* عند المرور */
+input[type="checkbox"]:hover:not(:disabled) {
+  --cb-border: var(--primary);
+  box-shadow: 0 0 0 4px rgba(31, 78, 121, 0.12);
+}
+
+/* محدد: يمتلئ بلون متدرج، وتُرسم علامة الصح، وتنبض الخانة نبضة قصيرة */
+input[type="checkbox"]:checked {
+  --cb-border: #1f4e79;
+  background: linear-gradient(135deg, #2a86d8, #1f4e79);
+  animation: checkbox-pop 0.32s ease;
+}
+input[type="checkbox"]:checked::after {
+  clip-path: inset(0 0 0 0);
+}
+
+/* أثناء الضغط تنكمش قليلاً */
+input[type="checkbox"]:active:not(:disabled) {
+  transform: scale(0.85);
+}
+
+/* منع اختفاء الحدّ عند التركيز (قاعدة input:focus العامة) */
+input[type="checkbox"]:focus {
+  outline: none;
+  border-color: var(--cb-border);
+}
+input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+input[type="checkbox"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@keyframes checkbox-pop {
+  0% {
+    transform: scale(0.8);
+  }
+  55% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* النص بجانب المربع: الضغط عليه يحرّك المربع نفس الحركة */
+label:has(> input[type="checkbox"]) {
+  cursor: pointer;
+  user-select: none;
+}
+label:has(> input[type="checkbox"]:not(:disabled)):hover
+  > input[type="checkbox"] {
+  --cb-border: var(--primary);
+  box-shadow: 0 0 0 4px rgba(31, 78, 121, 0.12);
+}
+label:has(> input[type="checkbox"]:not(:disabled)):active
+  > input[type="checkbox"] {
+  transform: scale(0.85);
+}
+/* حتى لا يطغى لون التمرير على المربع المحدد */
+label:has(> input[type="checkbox"]:checked):hover > input[type="checkbox"] {
+  --cb-border: #1f4e79;
+}
+
+/* خانة "بطال": تتحول إلى الأحمر */
+.check input[type="checkbox"]:checked,
+.check:hover input[type="checkbox"]:checked {
+  --cb-border: #c0392b;
+  background: linear-gradient(135deg, #e0584a, #c0392b);
+}
+.check input[type="checkbox"]:hover:not(:disabled):not(:checked) {
+  --cb-border: #c0392b;
+  box-shadow: 0 0 0 4px rgba(192, 57, 43, 0.12);
+}

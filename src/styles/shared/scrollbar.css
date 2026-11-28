@@ -1,0 +1,75 @@
+/* =====================================================
+   شريط التمرير (الطولي والعرضي): شكل ولون + الأسهم
+   لتغيير الألوان عدّل المتغيرات في variables.css
+   ===================================================== */
+::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+::-webkit-scrollbar-track {
+  background: var(--scroll-track);
+  border-radius: 8px;
+}
+/* مقبض على شكل كبسولة، والحدّ بلون المسار يجعله أنحف داخله */
+::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border-radius: 14px;
+  border: 3px solid var(--scroll-track);
+}
+::-webkit-scrollbar-thumb:hover,
+::-webkit-scrollbar-thumb:active {
+  background: var(--scroll-thumb-hover);
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ===== الأسهم في طرفي الشريط ===== */
+::-webkit-scrollbar-button:single-button {
+  display: block;
+  width: 16px;
+  height: 16px;
+  background-color: var(--scroll-track);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 10px;
+  border-radius: 6px;
+}
+/* نخفي الزرّين الإضافيين حتى لا يتكرر السهم */
+::-webkit-scrollbar-button:start:increment,
+::-webkit-scrollbar-button:end:decrement {
+  display: none;
+}
+
+/* سهم لأعلى */
+::-webkit-scrollbar-button:single-button:vertical:decrement {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M2 6.5 5 3.5 8 6.5' fill='none' stroke='%232a86d8' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+/* سهم لأسفل */
+::-webkit-scrollbar-button:single-button:vertical:increment {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M2 3.5 5 6.5 8 3.5' fill='none' stroke='%232a86d8' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+/* سهم لليسار */
+::-webkit-scrollbar-button:single-button:horizontal:decrement {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M6.5 2 3.5 5 6.5 8' fill='none' stroke='%232a86d8' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+/* سهم لليمين */
+::-webkit-scrollbar-button:single-button:horizontal:increment {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M3.5 2 6.5 5 3.5 8' fill='none' stroke='%232a86d8' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+/* عند المرور فوق السهم أو الضغط عليه */
+::-webkit-scrollbar-button:single-button:hover {
+  background-color: #cfe0f2;
+}
+::-webkit-scrollbar-button:single-button:active {
+  background-color: #b7d1ec;
+}
+
+/* متصفح Firefox */
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+  }
+}

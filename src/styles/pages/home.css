@@ -1,0 +1,28 @@
+/* ===== الصفحة الرئيسية البيضاء ===== */
+body.is-home {
+  background: #fff;
+}
+
+.home-credit {
+  position: fixed;
+  bottom: 16px;
+  left: 20px;
+  text-align: left;
+  line-height: 1.8;
+  color: #444;
+}
+
+.home-credit p {
+  font-weight: 600;
+}
+
+.home-credit a {
+  direction: ltr;
+  display: inline-block;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.home-credit a:hover {
+  text-decoration: underline;
+}

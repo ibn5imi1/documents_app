@@ -1,0 +1,30 @@
+/* =====================================================
+   مستند قيد (خاص بهذه الصفحة؛ بقية التنسيق في voucher-form.css)
+   ===================================================== */
+
+/* عمود مركز التكلفة */
+.lines-table th.c-cc,
+.lines-table td.c-cc {
+  width: 200px;
+  text-align: right;
+}
+
+.lines-table select {
+  padding: 8px 10px;
+}
+
+/* القيد الافتتاحي (المستند رقم 1) */
+.opening-badge {
+  color: #8a5a00;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.opening-note {
+  background: #fff4e0;
+  border: 1px solid #f0c987;
+  color: #8a5a00;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+}

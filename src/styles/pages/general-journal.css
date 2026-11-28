@@ -1,0 +1,75 @@
+/* ===== سجل اليومية العامة ===== */
+.filter-box.journal-filter {
+  grid-template-columns: 1fr 1fr 1fr 1.3fr 1.1fr auto;
+}
+
+/* الجدول أعرض من الشاشة: السكرول الأفقي يظهر داخل .table-wrap */
+.reg-table {
+  width: 1935px;
+}
+
+.reg-table th {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.reg-table td {
+  vertical-align: top;
+}
+
+.reg-table th.c-seq {
+  width: 60px;
+}
+.reg-table th.c-date {
+  width: 105px;
+}
+.reg-table th.c-debit,
+.reg-table th.c-credit,
+.reg-table th.c-stmt {
+  width: 400px;
+}
+.reg-table th.c-cheque,
+.reg-table th.c-pay,
+.reg-table th.c-jv,
+.reg-table th.c-jseq {
+  width: 70px;
+}
+.reg-table th.c-type {
+  width: 150px;
+}
+.reg-table th.c-amount {
+  width: 140px;
+}
+
+/* الأسماء المتعددة: كل اسم في سطر، والاسم الطويل ينزل لسطر جديد */
+.acc-line {
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+
+.acc-line + .acc-line {
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 1px dashed var(--border);
+}
+
+.reg-table td.c-stmt {
+  white-space: pre-line;
+  line-height: 1.6;
+}
+
+/* ===== رأس الجدول بصفين (أعمدة الجذور) ===== */
+/* الرأس كله يثبت أعلى الجدول عند التمرير، بدل تثبيت كل خلية لوحدها */
+.reg-table thead th {
+  position: static;
+}
+
+.reg-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.reg-table th.root-head {
+  background: #dce8f5;
+}

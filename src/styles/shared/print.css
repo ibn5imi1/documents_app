@@ -1,0 +1,80 @@
+/* =====================================================
+   الطباعة (يجب أن يكون آخر ملف في الفهرس)
+   ===================================================== */
+
+/* هوامش الصفحة = 0 حتى يختفي ما يضيفه المتصفح تلقائياً (التاريخ والوقت والعنوان والرابط) */
+@page {
+  margin: 0;
+}
+
+@media print {
+  /* هوامش الجدول بدل هوامش الصفحة: تتكرر في كل ورقة */
+  .print-spacer {
+    display: table-row;
+  }
+
+  .print-spacer th,
+  .print-spacer td {
+    height: 12mm;
+    padding: 0;
+    border: none !important;
+    background: none !important;
+  }
+
+  .page {
+    padding: 0 12mm;
+  }
+
+  .page-title {
+    margin-top: 12mm;
+  }
+
+  .home-credit {
+    display: none;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .navbar,
+  .toolbar,
+  .no-print,
+  .empty {
+    display: none !important;
+  }
+
+  #content {
+    padding: 0;
+    max-width: none;
+  }
+
+  .print-meta {
+    display: block;
+    margin-bottom: 12px;
+    color: #444;
+  }
+
+  .table-wrap {
+    border: none;
+    max-height: none;
+    overflow: visible;
+  }
+
+  th,
+  td {
+    border: 1px solid #000;
+  }
+
+  thead th {
+    background: #eee !important;
+  }
+
+  .count {
+    display: none;
+  }
+
+  tr {
+    page-break-inside: avoid;
+  }
+}

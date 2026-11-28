@@ -1,6 +1,32 @@
 src/
 ├── main.js                  ← الدخول، النافبار، التنقل فقط
 ├── style.css
+└── styles/
+    ├── shared/                ← المشترك
+    │   ├── variables.css
+    │   ├── scrollbar.css
+    │   ├── base.css
+    │   ├── navbar.css
+    │   ├── dialogs.css
+    │   ├── reports.css
+    │   ├── voucher-form.css
+    │   ├── loader.css
+    │   ├── toast.css
+    │   ├── date-picker.css
+    │   ├── account-picker.css
+    │   ├── select.css
+    │   ├── multi-select.css
+    │   ├── checkbox.css
+    │   └── print.css
+    └── pages/                 ← لكل صفحة
+        ├── login.css
+        ├── home.css
+        ├── table-page.css
+        ├── payment-report.css
+        ├── journal.css
+        ├── journal-report.css
+        ├── general-journal.css
+        └── general-ledger.css
 ├── core/
 │   ├── state.js             ← العملات والمستخدم الحالي
 │   ├── utils.js             ← أدوات (بحث، ترتيب)
@@ -14,6 +40,7 @@ src/
 │   ├── loader.js            ← (اللودر ورسم الجداول الكبيرة)
 │   ├── toast.js             ← (الرسائل المنبثقة)
 │   ├── accountPicker.js     ← (اختيار الحساب بالاسم أو الرقم مع القائمة)
+│   ├── multiSelect.js       ← (اختيار الحساب بالاسم أو الرقم مع القائمة)
 │   └── confirm.js           ← (نافذة تأكيد الحذف)
 └── pages/
 │    ├── documents/           ← مجلد قائمة "مستندات"
@@ -27,8 +54,8 @@ src/
 │    ├── registers/ مجلد التقارير
 │        ├── generalJournal.js سجل اليومية العامة
 │        ├── generalLedger.js سجل الأستاذ العام
-│    └── guide/               ← مجلد قائمة "الدليل"
-│       ├── accounts.js      ← الدليل المحاسبي
+│        └── guide/               ← مجلد قائمة "الدليل"
+│        ├── accounts.js      ← الدليل المحاسبي
 │        ├── accounts.txt     ← بياناته الافتراضية
 │        └── costcenters.js   ← مراكز التكلفة
 │

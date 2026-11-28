@@ -1,0 +1,126 @@
+/* ===== سجل الأستاذ العام ===== */
+.filter-box.ledger-filter {
+  grid-template-columns: 2.4fr 1fr 1fr;
+}
+
+/* الصف الثاني: مربع كشف جميع الحسابات + الأزرار */
+.ledger-options {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.check-all {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.start-hint {
+  color: #6b7785;
+  padding: 14px 0;
+}
+
+/* معلومات الحساب */
+.ledger-info {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+
+.ledger-info span {
+  display: block;
+  font-size: 13px;
+  color: #6b7785;
+  margin-bottom: 4px;
+}
+
+.ledger-info strong {
+  font-size: 16px;
+}
+
+/* جدول الحركات */
+.ledger-table th.c-debit,
+.ledger-table th.c-credit {
+  width: 150px;
+}
+.ledger-table th.c-docno {
+  width: 110px;
+}
+.ledger-table th.c-date {
+  width: 115px;
+}
+.ledger-table th.c-type {
+  width: 120px;
+}
+.ledger-table th.c-details {
+  width: auto;
+}
+
+.ledger-table td.c-details {
+  text-align: right;
+  white-space: pre-line;
+  line-height: 1.6;
+}
+
+.ledger-table tfoot td {
+  font-weight: 700;
+  background: #eaf0f7;
+}
+
+/* ملخص الأرصدة */
+.ledger-summary {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ledger-summary .sum-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ledger-summary .sum-row.total {
+  border-top: 2px solid var(--primary);
+  padding-top: 10px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+/* ===== كشف جميع الحسابات: جدول منفصل لكل حساب ===== */
+.all-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 14px;
+}
+
+.ledger-block + .ledger-block {
+  margin-top: 36px;
+  padding-top: 24px;
+  border-top: 3px dashed var(--border);
+}
+
+.ledger-block .table-wrap {
+  max-height: none;
+  overflow-x: auto;
+}

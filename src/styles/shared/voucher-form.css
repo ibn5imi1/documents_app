@@ -1,0 +1,172 @@
+/* =====================================================
+   نماذج المستندات (مستند صرف + مستند قيد)
+   ===================================================== */
+
+/* شريط وضع التعديل */
+.edit-banner {
+  background: #fff4e0;
+  border: 1px solid #f0c987;
+  color: #8a5a00;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+/* ===== الحقول العلوية ===== */
+.voucher-form {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+.voucher-form .field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.voucher-form .span-2 {
+  grid-column: span 2;
+}
+.voucher-form .span-4 {
+  grid-column: span 4;
+}
+
+.voucher-form textarea {
+  height: 60px;
+  resize: none;
+  overflow-y: auto;
+}
+
+/* رقم المستند */
+.f-number {
+  font-weight: 700;
+  text-align: center;
+}
+
+/* خانة "بطال" */
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: var(--danger);
+  cursor: pointer;
+}
+
+/* ===== جدول أسطر المستند ===== */
+.lines-wrap {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow-x: auto;
+  margin-bottom: 10px;
+}
+
+.lines-table th,
+.lines-table td {
+  padding: 6px 8px;
+}
+
+.lines-table input {
+  padding: 8px 10px;
+}
+
+.lines-table th.c-debit,
+.lines-table td.c-debit,
+.lines-table th.c-credit,
+.lines-table td.c-credit {
+  width: 170px;
+  text-align: right;
+}
+
+.lines-table th.c-acc,
+.lines-table td.c-acc {
+  width: 170px;
+  text-align: right;
+  white-space: normal;
+}
+
+.lines-table th.c-name,
+.lines-table td.c-name {
+  width: auto;
+  text-align: right;
+}
+
+.lines-table th.c-del,
+.lines-table td.c-del {
+  width: 80px;
+  text-align: center;
+}
+
+.lines-table input.amount {
+  direction: ltr;
+  text-align: right;
+}
+
+.acc-name.missing {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+/* ===== المجاميع ===== */
+.totals {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 16px 0;
+}
+
+.total-box {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 200px;
+}
+
+.total-box span {
+  font-size: 13px;
+  color: #6b7785;
+}
+
+.total-box strong {
+  font-size: 20px;
+  direction: ltr;
+  text-align: right;
+}
+
+.balance-note {
+  font-weight: 700;
+}
+.balance-note.ok {
+  color: #1e8449;
+}
+.balance-note.bad {
+  color: var(--danger);
+}
+
+.voucher-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* (غير مستعملة حالياً: الرسائل صارت منبثقة) */
+.form-success {
+  color: #1e8449;
+  min-height: 20px;
+  margin-top: 8px;
+  font-weight: 600;
+}

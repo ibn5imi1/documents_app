@@ -1,0 +1,78 @@
+/* القائمة المتعددة الاختيار (مثل أنواع القيد) */
+.multi-select {
+  position: relative;
+}
+
+.ms-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  color: #6b7785;
+  font: inherit;
+  text-align: right;
+  cursor: pointer;
+}
+
+.ms-button.has-value {
+  color: var(--text);
+}
+.ms-button:focus-visible {
+  outline: 2px solid var(--primary);
+}
+.ms-arrow {
+  color: var(--primary);
+}
+
+.ms-panel {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  min-width: 100%;
+  width: max-content;
+  max-width: 340px;
+  background: #fff;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 60;
+}
+
+.ms-tools {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ms-tools button {
+  border: none;
+  background: none;
+  color: var(--primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ms-list {
+  list-style: none;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.ms-list label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+}
+
+.ms-list label:hover {
+  background: #eaf0f7;
+}
