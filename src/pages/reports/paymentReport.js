@@ -212,14 +212,12 @@ function search() {
   renderTable(docs)
 }
 
-// رقم المستند، والرقم 1 هو الافتتاحي
-const numberLabel = (number) => (String(number) === '1' ? '1 (افتتاحي)' : number)
 
 function buildRow(doc, index) {
   const tr = document.createElement('tr')
   tr.append(
     cell(index + 1),
-    cell(numberLabel(doc.number)),
+    cell(doc.number),
     cell(formatDate(doc.date)),
     cell(doc.beneficiary),
     cell(doc.chequeNumber),

@@ -52,7 +52,7 @@ el.innerHTML = `
 
   <div class="voucher-form">
     <p class="opening-note span-4 hidden">
-      المستند رقم 1 هو القيد الافتتاحي: نوعه «قيد افتتاحي» وتاريخه 1/1 من السنة.
+        المستند رقم 1 هو القيد الافتتاحي: نوعه «قيد افتتاحي».
     </p>
 
     <label class="field span-2"><span>النوع</span>
@@ -142,20 +142,15 @@ for (const currency of CURRENCIES) {
 /* ================== رقم المستند ================== */
 const numberInput = $(".f-number", el);
 
-// المستند رقم 1: قيد افتتاحي بتاريخ 1/1 من السنة
+// المستند رقم 1 هو القيد الافتتاحي: نوعه «قيد افتتاحي» (بأي تاريخ)
 function applyOpeningRule() {
-  const isOpening = parseInt(numberInput.value, 10) === 1;
+  const isOpening = parseInt(numberInput.value, 10) === 1
 
-  if (isOpening) {
-    typeSelect.value = OPENING_TYPE;
-    const current = docDate.getValue() || todayISO();
-    if (!current.endsWith("-01-01"))
-      docDate.setValue(`${current.slice(0, 4)}-01-01`);
-  }
+  if (isOpening) typeSelect.value = OPENING_TYPE
 
-  typeSelect.disabled = isOpening; // النوع مقفل ما دام الرقم 1
-  $(".opening-badge", el).classList.toggle("hidden", !isOpening);
-  $(".opening-note", el).classList.toggle("hidden", !isOpening);
+  typeSelect.disabled = isOpening // النوع مقفل ما دام الرقم 1
+  $('.opening-badge', el).classList.toggle('hidden', !isOpening)
+  $('.opening-note', el).classList.toggle('hidden', !isOpening)
 }
 
 // أرقام فقط (الأرقام العربية تتحول إلى لاتينية)
@@ -436,17 +431,9 @@ function save() {
 
   if (!date) return message("error", "اختر تاريخ المستند");
 
-  // المستند رقم 1 هو القيد الافتتاحي: نوعه قيد افتتاحي وتاريخه 1/1 من السنة
-  if (n === 1) {
-    if (type !== OPENING_TYPE) {
-      return message("error", "المستند رقم 1 يجب أن يكون من نوع «قيد افتتاحي»");
-    }
-    if (!date.endsWith("-01-01")) {
-      return message(
-        "error",
-        "المستند رقم 1 (القيد الافتتاحي) يجب أن يكون بتاريخ 1/1 من السنة",
-      );
-    }
+  // المستند رقم 1 هو القيد الافتتاحي: نوعه «قيد افتتاحي» (والتاريخ حر)
+  if (n === 1 && type !== OPENING_TYPE) {
+    return message('error', 'المستند رقم 1 يجب أن يكون من نوع «قيد افتتاحي»')
   }
 
   // المستند الجديد يُحفظ في القسم المختار حالياً (وإذا كان "الكل" يظهر في كل الأقسام)
